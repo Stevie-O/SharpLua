@@ -14,9 +14,9 @@ namespace SharpLua
         static LuaInterface _interface = new LuaInterface();
 
         /// <summary>
-        /// Runs a file
+        /// Runs a file on the current LuaInterface object.
         /// </summary>
-        /// <param name="luaFile"></param>
+        /// <param name="luaFile">Path to file.</param>
         /// <returns></returns>
         public static object[] RunFile(string luaFile)
         {
@@ -24,10 +24,9 @@ namespace SharpLua
         }
 
         /// <summary>
-        /// Runs the code
+        /// Runs Lua code on the current LuaInterface object.
         /// </summary>
-        /// <param name="luaCode"></param>
-        /// <param name="enviroment"></param>
+        /// <param name="luaCode">Lua source code.</param>
         /// <returns></returns>
         public static object[] Run(string luaCode)
         {
@@ -35,10 +34,21 @@ namespace SharpLua
         }
 
         /// <summary>
-        /// Attempts to find a file from a shortened path (no extension)
+        /// Helper method (see remarks).
         /// </summary>
-        /// <param name="spath"></param>
+        /// <param name="spath">Path and filename, possibly without extension.</param>
         /// <returns></returns>
+        /// <remarks>
+        /// This method attempts to auto-complete the specified path and filename with an extension.
+        /// The following extensions are tried, in this order:
+        /// <list type="number">
+        /// <item>.lua</item>
+        /// <item>.slua</item>
+        /// <item>.luac</item>
+        /// <item>.sluac</item>
+        /// </list>
+        /// The check is a simple filesystem check, so relative paths start from the current working directory.
+        /// </remarks>
         public static string FindFullPath(string spath)
         {
             if (File.Exists(spath))
@@ -70,19 +80,27 @@ namespace SharpLua
         }
 
         /// <summary>
-        /// Returns the variable.
+        /// Returns the value of the specified global variable.
         /// You should capture returns in a 'dynamic' object
         /// </summary>
         /// <example>
         /// dynamic name = LuaRuntime.GetVariable("name");
         /// </example>
-        /// <param name="varName"></param>
-        /// <returns></returns>
+        /// <param name="varName">Global variable name.</param>
+        /// <returns>The global variable's value.
+        /// 
+        /// TODO: behavior for undefined globals?
+        /// </returns>
         public static object GetVariable(string varName)
         {
             return _interface[varName];
         }
 
+        /// <summary>
+        /// Sets the value of the specified global variable to <paramref name="val"/>.
+        /// </summary>
+        /// <param name="varName">Global variable name.</param>
+        /// <param name="val">New value.</param>
         public static void SetVariable(string varName, object val)
         {
             _interface[varName] = val;
@@ -93,21 +111,37 @@ namespace SharpLua
             _interface.RegisterModule(t);
         }
 
+        /// <summary>
+        /// Gets the global LuaInterface object used by LuaRuntime methods.
+        /// </summary>
+        /// <returns>The current LuaInterface object.</returns>
         public static LuaInterface GetLua()
         {
             return _interface;
         }
 
+        /// <summary>
+        /// Sets the global LuaInterface object used by LuaRuntime methods.
+        /// </summary>
+        /// <param name="i">New LuaInterface object.</param>
         public static void SetLua(LuaInterface i)
         {
             _interface = i;
         }
 
+        /// <summary>
+        /// Sets the global LuaInterface object used by LuaRuntime methods.
+        /// </summary>
+        /// <param name="lua">???</param>
         public static void SetLua(Lua.LuaState lua)
         {
             _interface = lua.Interface;
         }
         
+        /// <summary>
+        /// Performs "require(<paramref name="lib"/>)".
+        /// </summary>
+        /// <param name="lib">Path and name of library file.</param>
         public static void Require(string lib)
         {
             Run("require('" + lib + "')");
