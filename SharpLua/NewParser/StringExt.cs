@@ -20,5 +20,13 @@ namespace SharpLua
                 s2 += s;
             return s2;
         }
+
+        public static bool IsNullOrWhiteSpace(string s)
+        {
+            if (s == null) return true;
+            if (s.Trim().Length == 0) return true;
+            return false;
+        }
+
     }
 }

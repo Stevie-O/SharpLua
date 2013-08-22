@@ -167,7 +167,7 @@ namespace SharpLua.LASM
             index = 0;
             file = new LuaFile();
             Disassembler.loadNumber = null;
-            if (chunk == null || string.IsNullOrWhiteSpace(chunk))
+            if (StringExt.IsNullOrWhiteSpace(chunk))
                 throw new Exception("chunk is empty");
 
             file.Identifier = GetString(4); // \027Lua
@@ -207,7 +207,7 @@ namespace SharpLua.LASM
             index = 0;
             file = new LuaFile();
             loadNumber = PlatformConfig.GetNumberTypeConvertFrom(file);
-            if (chunk == null || string.IsNullOrWhiteSpace(chunk))
+            if (StringExt.IsNullOrWhiteSpace(chunk))
                 throw new Exception("chunk is empty");
             return ReadFunction();
         }

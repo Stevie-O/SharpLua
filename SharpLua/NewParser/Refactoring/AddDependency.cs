@@ -132,7 +132,7 @@ namespace SharpLua
 
             string name = "", varName = "";
 
-            if (type.Contains('.'))
+            if (type.IndexOf('.') >= 0)
             {
                 name = type.Substring(0, type.LastIndexOf('.'));
                 varName = type.Substring(type.LastIndexOf('.') + 1);

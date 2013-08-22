@@ -1,0 +1,231 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{90A9C907-11AD-4754-8B70-51CCB3A6C98A}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SharpLua</RootNamespace>
+    <AssemblyName>SharpLua</AssemblyName>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <NoStdLib>False</NoStdLib>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>Full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\bin\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;IMPLICIT_VARARG;OVERRIDE_LOAD;LUA_CORE;_WIN32;LUA_COMPAT_VARARG;LUA_COMPAT_MOD;LUA_COMPAT_GFIND;CATCH_EXCEPTIONS;NET20</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;LUA_CORE;_WIN32;LUA_COMPAT_VARARG;LUA_COMPAT_MOD;LUA_COMPAT_GFIND;CATCH_EXCEPTIONS;NET20</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <BaseAddress>4194304</BaseAddress>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Decompiler\Decompiler.cs" />
+    <Content Include="Defines.txt" />
+    <Compile Include="Interfacing\CheckType.cs" />
+    <Compile Include="Interfacing\GenerateEventAssembly.cs" />
+    <Compile Include="Interfacing\Lua.cs" />
+    <Compile Include="Interfacing\LuaBase.cs" />
+    <Compile Include="Interfacing\LuaDLL.cs" />
+    <Compile Include="Interfacing\LuaException.cs" />
+    <Compile Include="Interfacing\LuaFunction.cs" />
+    <Compile Include="Interfacing\LuaGlobalAttribute.cs" />
+    <Compile Include="Interfacing\LuaHideAttribute.cs" />
+    <None Include="..\TODO.txt">
+      <Link>TODO.txt</Link>
+    </None>
+    <None Include="Decompiler\disassembler example.lua" />
+    <Compile Include="Interfacing\LuaRegistrationHelper.cs" />
+    <Compile Include="Interfacing\LuaScriptException.cs" />
+    <Compile Include="Interfacing\LuaTable.cs" />
+    <Compile Include="Interfacing\LuaUserData.cs" />
+    <Compile Include="Interfacing\Metatables.cs" />
+    <Compile Include="Interfacing\MethodWrapper.cs" />
+    <Compile Include="Interfacing\LuaModuleAttribute.cs" />
+    <Compile Include="Interfacing\LuaFunctionAttribute.cs" />
+    <Compile Include="Interfacing\ObjectTranslator.cs" />
+    <Compile Include="Interfacing\ProxyType.cs" />
+    <None Include="LASM\Dumper.cs_" />
+    <None Include="lua.cs" />
+    <None Include="luac.cs" />
+    <Compile Include="Interfacing\ScriptStrings.cs" />
+    <Compile Include="LASM\bit.cs" />
+    <Compile Include="LASM\Chunk.cs" />
+    <Compile Include="LASM\Disassembler.cs" />
+    <Compile Include="LASM\Enums.cs" />
+    <Compile Include="LASM\Instruction.cs" />
+    <Compile Include="LASM\LASMDecompiler.cs" />
+    <Compile Include="LASM\LasmParser.cs" />
+    <Compile Include="LASM\LuaFile.cs" />
+    <Compile Include="LASM\PlatformConfig.cs" />
+    <Compile Include="LASM\Verifier.cs" />
+    <Compile Include="LuaCore\Libraries\lbitlib.cs" />
+    <Compile Include="LuaCore\VM\lapi.cs" />
+    <Compile Include="LuaCore\VM\lauxlib.cs" />
+    <Compile Include="LuaCore\Libraries\lbaselib.cs" />
+    <Compile Include="LuaCore\VM\lcode.cs" />
+    <Compile Include="LuaCore\Libraries\ldblib.cs" />
+    <Compile Include="LuaCore\VM\ldebug.cs" />
+    <Compile Include="LuaCore\VM\ldo.cs" />
+    <Compile Include="LuaCore\VM\ldump.cs" />
+    <Compile Include="LuaCore\VM\lfunc.cs" />
+    <Compile Include="LuaCore\VM\lgc.cs" />
+    <Compile Include="LuaCore\linit.cs" />
+    <Compile Include="LuaCore\Libraries\liolib.cs" />
+    <Compile Include="LuaCore\Parser\llex.cs" />
+    <Compile Include="LuaCore\llimits.cs" />
+    <Compile Include="LuaCore\Libraries\lmathlib.cs" />
+    <Compile Include="LuaCore\VM\lmem.cs" />
+    <Compile Include="LuaCore\Libraries\loadlib.cs" />
+    <Compile Include="LuaCore\lobject.cs" />
+    <Compile Include="LuaCore\VM\lopcodes.cs" />
+    <Compile Include="LuaCore\Libraries\loslib.cs" />
+    <Compile Include="LuaCore\Parser\lparser.cs" />
+    <Compile Include="LuaCore\lstate.cs" />
+    <Compile Include="LuaCore\lstring.cs" />
+    <Compile Include="LuaCore\Libraries\lstrlib.cs" />
+    <Compile Include="LuaCore\ltable.cs" />
+    <Compile Include="LuaCore\Libraries\ltablib.cs" />
+    <Compile Include="LuaCore\ltm.cs" />
+    <Compile Include="LuaCore\lua.cs" />
+    <Compile Include="LuaCore\luaconf.cs" />
+    <Compile Include="LuaCore\Libraries\lualib.cs" />
+    <Compile Include="LuaCore\VM\lundump.cs" />
+    <Compile Include="LuaCore\VM\lvm.cs" />
+    <Compile Include="LuaCore\lzio.cs" />
+    <Compile Include="LuaCore\print.cs" />
+    <Compile Include="LuaRuntime.cs" />
+    <Compile Include="Net20Support.cs" />
+    <Compile Include="NewParser\Ast\BinaryOperator.cs" />
+    <Compile Include="NewParser\Ast\Chunk.cs" />
+    <Compile Include="NewParser\Ast\Expression\AnonymousFunctionExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\BinOpExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\BoolExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\CallExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\Expression.cs" />
+    <Compile Include="NewParser\Ast\Expression\IndexExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\InlineFunctionStatement.cs" />
+    <Compile Include="NewParser\Ast\Expression\TableConstructorKeyExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\MemberExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\NilExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\NumberExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\StringCallExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\StringExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\TableConstructorNamedFunctionExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\TableConstructorStringKeyExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\TableCallExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\TableConstructorExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\UnOpExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\TableConstructorValueExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\VarargExpr.cs" />
+    <Compile Include="NewParser\Ast\Expression\VariableExpression.cs" />
+    <Compile Include="NewParser\Ast\Scope.cs" />
+    <Compile Include="NewParser\Ast\Statement\AssignmentStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\AugmentedAssignmentStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\BreakStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\CallStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\ContinueStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\DoStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\ForStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\FunctionStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\GotoStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\IfStmt.cs" />
+    <Compile Include="NewParser\Ast\Statement\LabelStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\RepeatStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\ReturnStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\Statement.cs" />
+    <Compile Include="NewParser\Ast\Statement\UsingStatement.cs" />
+    <Compile Include="NewParser\Ast\Statement\WhileStatement.cs" />
+    <Compile Include="NewParser\Ast\Variable.cs" />
+    <Compile Include="NewParser\Compiler\Block.cs" />
+    <None Include="NewParser\Compiler\Compiler.cs" />
+    <Compile Include="NewParser\Compiler\Compiler2.cs" />
+    <Compile Include="NewParser\Compiler\Compiler3.cs" />
+    <Compile Include="NewParser\Compiler\K2Reg.cs" />
+    <Compile Include="NewParser\Compiler\Unescaper.cs" />
+    <Compile Include="NewParser\Compiler\Var2Reg.cs" />
+    <Compile Include="NewParser\Refactoring\FindReferencesBeforeDefinition.cs" />
+    <Compile Include="NewParser\Visitors\NonModifiedAstBeautifier.cs" />
+    <Compile Include="NewParser\XmlDocumentation\DocumentationComment.cs" />
+    <Compile Include="NewParser\XmlDocumentation\Documentation.cs" />
+    <Compile Include="NewParser\XmlDocumentation\ExtractDocumentationComments.cs" />
+    <Compile Include="NewParser\Lexer.cs" />
+    <Compile Include="NewParser\Location.cs" />
+    <Compile Include="NewParser\LuaSourceException.cs" />
+    <Compile Include="NewParser\Parser.cs" />
+    <Compile Include="NewParser\Refactoring\AddDependency.cs" />
+    <Compile Include="NewParser\Refactoring\FindMisspelledVariables.cs" />
+    <Compile Include="NewParser\Refactoring\FindReferences.cs" />
+    <Compile Include="NewParser\Refactoring\FindUnusedVariables.cs" />
+    <Compile Include="NewParser\Refactoring\FindImplementation.cs" />
+    <Compile Include="NewParser\Refactoring\InlineFunction.cs" />
+    <Compile Include="NewParser\StringExt.cs" />
+    <Compile Include="NewParser\Token.cs" />
+    <Compile Include="NewParser\TokenReader.cs" />
+    <Compile Include="NewParser\Visitors\BasicBeautifier.cs" />
+    <Compile Include="NewParser\Visitors\Beautifier.cs" />
+    <Compile Include="NewParser\Visitors\FormattingOptions.cs" />
+    <Compile Include="NewParser\Visitors\Minifier.cs" />
+    <Compile Include="NewParser\Visitors\ExactReconstruction.cs" />
+    <Compile Include="NewParser\Visitors\LuaCompatibleOutput.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="LuaCore\printf.cs" />
+    <None Include="Resources\BuildResources.bat" />
+    <None Include="Resources\clrlib.slua" />
+    <EmbeddedResource Include="Resources\clrlib.sluac" />
+    <None Include="Resources\extlib.slua" />
+    <EmbeddedResource Include="Resources\extlib.sluac" />
+    <None Include="Resources\luanet.slua" />
+    <EmbeddedResource Include="Resources\luanet.sluac" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="LASM\LASM.txt" />
+    <Content Include="LASM\Readme.txt" />
+    <Content Include="NewParser\Compiler\AstToCodeMap.txt" />
+    <Content Include="NewParser\Todo.txt" />
+    <Content Include="NewParser\XmlDocumentation\Format.txt" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

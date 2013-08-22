@@ -46,9 +46,11 @@ namespace SharpLua.Compiler
         {
             //if (V.has(varname))
             //{
+            foreach (Local l2 in Chunk.Locals)
+                if (l2.Name == varname)
+                    return;
+
             Local l = new Local(varname, 0, 0);
-            if (Chunk.Locals.Any((L) => l.Name == varname))
-                return;
             Chunk.Locals.Add(l);
             //}
         }
