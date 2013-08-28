@@ -59,31 +59,31 @@ namespace SharpLua
             }
             else
                 switch (idx)
-            {  /* pseudo-indices */
+                {  /* pseudo-indices */
                     case LUA_REGISTRYINDEX: return registry(L);
-                case LUA_ENVIRONINDEX:
-                    {
-                        Closure func = curr_func(L);
-                        sethvalue(L, L.env, func.c.env);
-                        return L.env;
-                    }
+                    case LUA_ENVIRONINDEX:
+                        {
+                            Closure func = curr_func(L);
+                            sethvalue(L, L.env, func.c.env);
+                            return L.env;
+                        }
                     case LUA_GLOBALSINDEX: return gt(L);
-                default:
-                    {
-                        Closure func = curr_func(L);
-                        idx = LUA_GLOBALSINDEX - idx;
-                        return (idx <= func.c.nupvalues)
-                            ? func.c.upvalue[idx - 1]
-                            : (TValue)luaO_nilobject;
-                    }
-            }
+                    default:
+                        {
+                            Closure func = curr_func(L);
+                            idx = LUA_GLOBALSINDEX - idx;
+                            return (idx <= func.c.nupvalues)
+                                ? func.c.upvalue[idx - 1]
+                                : (TValue)luaO_nilobject;
+                        }
+                }
         }
 
 
         internal static Table getcurrenv(LuaState L)
         {
             if (L.ci == L.base_ci[0])  /* no enclosing function? */
-            return hvalue(gt(L));  /* use global table as environment */
+                return hvalue(gt(L));  /* use global table as environment */
             else
             {
                 Closure func = curr_func(L);
@@ -241,7 +241,7 @@ namespace SharpLua
             {
                 setobj(L, o, L.top - 1);
                 if (idx < LUA_GLOBALSINDEX)  /* function upvalue? */
-                luaC_barrier(L, curr_func(L), L.top - 1);
+                    luaC_barrier(L, curr_func(L), L.top - 1);
             }
             StkId.dec(ref L.top);
             lua_unlock(L);
@@ -402,8 +402,8 @@ namespace SharpLua
             StkId o = index2adr(L, idx);
             switch (ttype(o))
             {
-                    case LUA_TSTRING: return tsvalue(o).len;
-                    case LUA_TUSERDATA: return uvalue(o).len;
+                case LUA_TSTRING: return tsvalue(o).len;
+                case LUA_TUSERDATA: return uvalue(o).len;
                 case LUA_TTABLE:
                     // Table now respects __len metamethod
                     Table h = hvalue(o);
@@ -421,7 +421,7 @@ namespace SharpLua
                         lua_unlock(L);
                         return l;
                     }
-                    default: return 0;
+                default: return 0;
             }
         }
 
@@ -438,9 +438,9 @@ namespace SharpLua
             StkId o = index2adr(L, idx);
             switch (ttype(o))
             {
-                    case LUA_TUSERDATA: return (rawuvalue(o).user_data);
-                    case LUA_TLIGHTUSERDATA: return pvalue(o);
-                    default: return null;
+                case LUA_TUSERDATA: return (rawuvalue(o).user_data);
+                case LUA_TLIGHTUSERDATA: return pvalue(o);
+                default: return null;
             }
         }
 
@@ -457,13 +457,13 @@ namespace SharpLua
             StkId o = index2adr(L, idx);
             switch (ttype(o))
             {
-                    case LUA_TTABLE: return hvalue(o);
-                    case LUA_TFUNCTION: return clvalue(o);
-                    case LUA_TTHREAD: return thvalue(o);
+                case LUA_TTABLE: return hvalue(o);
+                case LUA_TFUNCTION: return clvalue(o);
+                case LUA_TTHREAD: return thvalue(o);
                 case LUA_TUSERDATA:
                 case LUA_TLIGHTUSERDATA:
                     return lua_touserdata(L, idx);
-                    default: return null;
+                default: return null;
             }
         }
 
@@ -965,6 +965,127 @@ namespace SharpLua
             return status;
         }
 
+        /// <summary>
+        /// Wraps a lua_Reader and its associated data object to provide a read-ahead ("peek") ability.
+        /// </summary>
+        class PeekableLuaReader
+        {
+            readonly lua_Reader inner;
+            readonly object inner_data;
+            CharPtr readahead_buffer;
+            uint readahead_buffer_size;
+
+            public PeekableLuaReader(lua_Reader inner, object inner_data)
+            {
+                this.inner = inner;
+                this.inner_data = inner_data;
+            }
+
+            public CharPtr lua_Reader(LuaState L, object ud, out uint sz)
+            {
+                if (readahead_buffer != null && readahead_buffer_size != 0)
+                {
+                    CharPtr tmp = readahead_buffer;
+                    sz = readahead_buffer_size;
+                    readahead_buffer = null;
+                    return tmp;
+                }
+                return inner(L, inner_data, out sz);
+            }
+
+            static readonly CharPtr empty_buffer = new CharPtr(new char[1]);
+
+            public int peek(LuaState L, object ud)
+            {
+                if (readahead_buffer == null)
+                {
+                    readahead_buffer = inner(L, inner_data, out readahead_buffer_size);
+                    if (readahead_buffer == null)
+                    {
+                        readahead_buffer = empty_buffer;
+                        readahead_buffer_size = 0;
+                    }
+                }
+                if (readahead_buffer_size == 0) return -1; // EOF
+                return readahead_buffer[0];
+            }
+        }
+
+        class CharPtrLuaReader
+        {
+            CharPtr buffer;
+            uint size;
+
+            public CharPtrLuaReader(CharPtr buffer, int size)
+            {
+                if (size < 0) throw new ArgumentException("size must be >= 0!");
+                this.buffer = buffer;
+                this.size = (uint)size;
+            }
+
+            public CharPtr lua_Reader(LuaState L, object ud, out uint sz)
+            {
+                CharPtr old_buffer = buffer;
+                sz = size;
+
+                buffer = null;
+                size = 0;
+
+                return old_buffer;
+            }
+        }
+
+        /// <summary>
+        /// Performs SharpLua-specific preprocessing magic for lua_load()
+        /// </summary>
+        /// <param name="reader">Original lua_Reader.</param>
+        /// <param name="data">Data object for the original lua_Reader</param>
+        static void SharpLua_OverrideLoad(LuaState L, ref lua_Reader reader, ref object data)
+        {
+            // Wrap our reader in a PeekableLuaReader.
+            PeekableLuaReader plr = new PeekableLuaReader(reader, data);
+            reader = plr.lua_Reader;
+            data = plr;
+
+            // Look ahead to see if it's something we're interested in.
+            int peek_char = plr.peek(L, plr);
+            if (peek_char != LUA_SIGNATURE[0]) return; // if it's empty, or there's no binary value, there's no work to be done.
+
+            // Okay, we are.  Read the whole thing into memory RIGHT NOW
+            char[] cur_buffer = null;
+            int cur_buffer_size = 0;
+            CharPtr next_data;
+            uint _next_data_size;
+            while ( (next_data = reader(L, data, out _next_data_size)) != null ) 
+            {
+                int next_data_size = checked((int) _next_data_size);
+                if (next_data_size == 0) continue;
+                char[] new_buffer = new char[cur_buffer_size + next_data_size];
+                if (cur_buffer_size > 0) {
+                    Buffer.BlockCopy(cur_buffer, 0, new_buffer, 0, cur_buffer_size);
+                }
+                Buffer.BlockCopy(next_data.chars, next_data.index, new_buffer, cur_buffer_size, next_data_size);
+                cur_buffer = new_buffer;
+                cur_buffer_size = cur_buffer.Length;
+            }
+
+            Lexer l = new Lexer();
+
+            TokenReader tr = l.Lex(new CharPtr(cur_buffer));
+            Parser p = new Parser(tr);
+            Ast.Chunk c = p.Parse();
+
+            Visitors.LuaCompatibleOutput lco = new Visitors.LuaCompatibleOutput();
+            string s = lco.Format(c);
+            CharPtr s_buf = new CharPtr(s);
+
+            // Replace the provided lua_Reader with one that reads out of the CharPtrLuaReader.
+            CharPtrLuaReader cplr = new CharPtrLuaReader(s_buf, s.Length);
+            reader = cplr.lua_Reader;
+            data = cplr;
+
+        }
+
 
         public static int lua_load(LuaState L, lua_Reader reader, object data,
                                    CharPtr chunkname)
@@ -974,88 +1095,10 @@ namespace SharpLua
             lua_lock(L);
             if (chunkname == null) chunkname = "?";
 
-            #if OVERRIDE_LOAD || true
+#if OVERRIDE_LOAD || true
             //#if false
-            if (data is LoadS)
-            {
-                LoadS d = data as LoadS;
-                if (d.size > 0 && d.s.chars[0] != LUA_SIGNATURE[0]) // if its not binary
-                {
-                    Lexer l = new Lexer();
-                    try
-                    {
-                        //Console.WriteLine(d.s);
-                        TokenReader tr = l.Lex(d.s);
-                        Parser p = new Parser(tr);
-                        Ast.Chunk c = p.Parse();
-
-                        Visitors.LuaCompatibleOutput lco = new Visitors.LuaCompatibleOutput();
-                        string s = lco.Format(c);
-                        d.s = s;
-                        d.size = (lu_mem)s.Length;
-                    }
-                    catch (LuaSourceException ex)
-                    {
-                        throw ex;
-                    }
-                }
-                else
-                {
-                    d.s.index = 0;
-
-                    // Why isn't the size equal to the chars.Length?
-                    Debug.WriteLine("Binary data: d.size=" + d.size + " d.s.chars.Length=" + d.s.chars.Length);
-                    Debug.WriteLine("Equal: " + (d.size == d.s.chars.Length));
-                    //Debug.Assert(d.size == d.s.chars.Length);
-                    d.size = (uint)d.s.chars.Length;
-                }
-            }
-            else if (data is LoadF)
-            {
-                LoadF lf = data as LoadF;
-
-                if (lf.f.ReadByte() != LUA_SIGNATURE[0]) // if its not binary
-                {
-                    lf.f.Position = 0;
-                    MemoryStream ms = new MemoryStream();
-                    while (lf.f.Position < lf.f.Length)
-                        ms.WriteByte((byte)lf.f.ReadByte());
-                    ms.Position = 0;
-
-                    // not binary file
-                    ms.Position = 0;
-                    StringBuilder sb = new StringBuilder();
-                    while (ms.Position < ms.Length)
-                        sb.Append((char)ms.ReadByte());
-
-                    try
-                    {
-                        Lexer l = new Lexer();
-                        TokenReader tr = l.Lex(sb.ToString());
-                        Parser p = new Parser(tr);
-                        Ast.Chunk c = p.Parse();
-                        Visitors.LuaCompatibleOutput lco = new Visitors.LuaCompatibleOutput();
-                        string s = lco.Format(c);
-                        ms = new MemoryStream();
-                        // TODO: there HAS to be a better way...
-                        foreach (char c2 in s)
-                            ms.WriteByte((byte)c2);
-                        ms.Position = 0;
-                        lf.f = ms;
-                    }
-                    catch (LuaSourceException ex)
-                    {
-                        lua_pushstring(L, ex.GenerateMessage(chunkname));
-                        return 1;
-                        //throw ex;
-                    }
-                }
-                else
-                {
-                    lf.f.Position = 0; // reset the read character
-                }
-            }
-            #endif
+            SharpLua_OverrideLoad(L, ref reader, ref data);
+#endif
             luaZ_init(L, z, reader, data);
             status = luaD_protectedparser(L, z, chunkname);
             lua_unlock(L);
