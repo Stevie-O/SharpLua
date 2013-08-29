@@ -1071,14 +1071,14 @@ namespace SharpLua
             {
                 int next_data_size = checked((int) _next_data_size);
                 if (next_data_size == 0) continue;
-                char[] new_buffer = new char[cur_buffer_size + next_data_size];
+                char[] new_buffer = new char[cur_buffer_size + next_data_size + 1];
                 if (cur_buffer_size > 0) 
                 {
                     Array.Copy(cur_buffer, 0, new_buffer, 0, cur_buffer_size);
                 }
                 Array.Copy(next_data.chars, next_data.index, new_buffer, cur_buffer_size, next_data_size);
                 cur_buffer = new_buffer;
-                cur_buffer_size = cur_buffer.Length;
+                cur_buffer_size = cur_buffer.Length - 1;
             }
 
             Lexer l = new Lexer();
