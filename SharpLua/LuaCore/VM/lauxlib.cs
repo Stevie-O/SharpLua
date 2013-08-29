@@ -762,7 +762,11 @@ namespace SharpLua
             LoadS ls = (LoadS)ud;
 
             //(void)L;
-            //if (ls.size == 0) return null;
+            if (ls.size == 0)
+            {
+                size = 0;
+                return null;
+            }
             size = ls.size;
             ls.size = 0;
             return ls.s;
