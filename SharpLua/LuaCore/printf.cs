@@ -239,9 +239,10 @@ namespace AT.MIN
         }
         #endregion
         #region printf
-        public static void printf( string Format, params object[] Parameters )
+        public static void fprintf(Stream stdout, string Format, params object[] Parameters )
         {
-            Console.Write( Tools.sprintf( Format, Parameters ) );
+            string s = Tools.sprintf(Format, Parameters);
+            SharpLua.Lua.fputs(s, stdout);
         }
         #endregion
         #region fprintf

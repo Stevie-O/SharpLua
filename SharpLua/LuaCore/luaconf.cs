@@ -938,12 +938,12 @@ namespace SharpLua
 
         public static void putchar(char ch)
         {
-            Console.Write(ch);
+            fputc(ch, stdout);
         }
 
-        public static void putchar(int ch)
+        public static int putchar(int ch)
         {
-            Console.Write((char)ch);
+            return fputc(ch, stdout);
         }
 
         public static bool isprint(byte c)
@@ -997,7 +997,7 @@ namespace SharpLua
 
         public static void printf(CharPtr str, params object[] argv)
         {
-            Tools.printf(str.ToString(), argv);
+            Tools.fprintf(stdout, str.ToString(), argv);
         }
 
         public static void sprintf(CharPtr buffer, CharPtr str, params object[] argv)
@@ -1009,12 +1009,8 @@ namespace SharpLua
         public static int fprintf(Stream stream, CharPtr str, params object[] argv)
         {
             string result = Tools.sprintf(str.ToString(), argv);
-            char[] chars = result.ToCharArray();
-            byte[] bytes = new byte[chars.Length];
-            for (int i = 0; i < chars.Length; i++)
-                bytes[i] = (byte)chars[i];
-            stream.Write(bytes, 0, bytes.Length);
-            return 1;
+            fputs(result, stream);
+            return result.Length;
         }
 
         public const int EXIT_SUCCESS = 0;
@@ -1036,7 +1032,6 @@ namespace SharpLua
             //if (envname == "LUA_PATH)
             //return "MyPath";
             return System.Environment.GetEnvironmentVariable(envname.ToString());
-            return null;
         }
 
         public class CharPtr
@@ -1194,19 +1189,33 @@ namespace SharpLua
             }
             */
 
+            /// <summary>
+            /// Converts the entire remainder buffer, less 1 character, to a .NET String object.
+            /// Does NOT have NUL-termination semantics!
+            /// </summary>
+            /// <returns>A .NET String object</returns>
             public override string ToString()
             {
-                string result = "";
-                for (int i = index; i < chars.Length - 1; i++)
-                    result += chars[i];
-                return result;
+                // Note: This does not work in the context of 
+                return new string(chars, index, chars.Length - 1 - index);
             }
 
             public static implicit operator String(CharPtr chrptr)
             {
+                // TODO: Is this appropriate? Should we not return null?
                 if (chrptr == null)
                     return "";
                 return chrptr.ToString();
+            }
+
+            /// <summary>
+            /// Return an ArraySegment corresponding to the NUL-terminated string starting at <see cref="index"/>.
+            /// </summary>
+            /// <returns></returns>
+            public ArraySegment<char> ToCString()
+            {
+                int len = strlen(this);
+                return new ArraySegment<char>(this.chars, this.index, len);
             }
         }
         public static int memcmp(CharPtr ptr1, CharPtr ptr2, uint size) { return memcmp(ptr1, ptr2, (int)size); }
@@ -1349,13 +1358,39 @@ namespace SharpLua
 #endif
         public static int EOF = -1;
 
-        public static void fputs(CharPtr str, Stream stream)
+        static int WriteArrayToStream(Stream s, byte[] buffer)
         {
-            Console.Write(str.ToString());
+            s.Write(buffer, 0, buffer.Length);
+            return buffer.Length;
+        }
+
+        public static int fputc(int ch, Stream f)
+        {
+            return fputc((char)ch, f);
+        }
+
+        public static int fputc(char ch, Stream f)
+        {
+            WriteArrayToStream(f, Encoding.UTF8.GetBytes(new char[] { ch }));
+            return (int)ch;
+        }
+
+        public static int fputs(CharPtr str, Stream stream)
+        {
+            ArraySegment<char> asciiz = str.ToCString();
+            WriteArrayToStream(stream, Encoding.UTF8.GetBytes(asciiz.Array, asciiz.Offset, asciiz.Count));
+            return asciiz.Count;
+        }
+
+        public static int fputs(string native_str, Stream stream)
+        {
+            WriteArrayToStream(stream, Encoding.UTF8.GetBytes(native_str));
+            return native_str.Length;
         }
 
         public static int feof(Stream s)
         {
+            // TODO: this is wrong. For one thing, it 100% malfunctions on non-seekable streams.
             return (s.Position >= s.Length) ? 1 : 0;
         }
 
@@ -1423,6 +1458,7 @@ namespace SharpLua
             {
                 while (true)
                 {
+                    // TODO: this does not account for EOF
                     str[index] = (char)stream.ReadByte();
                     if (str[index] == '\n')
                         break;
@@ -1455,6 +1491,7 @@ namespace SharpLua
 
         public static CharPtr strstr(CharPtr str, CharPtr substr)
         {
+            // TODO: fix; highly inefficient.
             int index = str.ToString().IndexOf(substr.ToString());
             if (index < 0)
                 return null;
@@ -1535,6 +1572,7 @@ namespace SharpLua
 
         public static int fscanf(Stream f, CharPtr format, params object[] argp)
         {
+            // TODO: FIX THIS! this is so completely broken I don't even know where to begin
             string str = Console.ReadLine();
             return parse_scanf(str, format, argp);
         }

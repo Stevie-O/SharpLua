@@ -17,6 +17,7 @@ namespace SharpLua
     using lu_byte = System.Byte;
     using ptrdiff_t = System.Int32;
     using Instruction = System.UInt32;
+    using System.IO;
 
     public partial class Lua
     {
@@ -551,6 +552,11 @@ namespace SharpLua
 
         public static void Dump(int pc, Instruction i)
         {
+            Dump(Console.Out, pc, i);
+        }
+
+        public static void Dump(TextWriter o, int pc, Instruction i)
+        {
             int A = GETARG_A(i);
             int B = GETARG_B(i);
             int C = GETARG_C(i);
@@ -559,12 +565,12 @@ namespace SharpLua
             if ((sBx & 0x100) != 0)
                 sBx = -(sBx & 0xff);
 
-            Console.Write("{0,5} ({1,10}): ", pc, i);
-            Console.Write("{0,-10}\t", luaP_opnames[(int)GET_OPCODE(i)]);
+            o.Write("{0,5} ({1,10}): ", pc, i);
+            o.Write("{0,-10}\t", luaP_opnames[(int)GET_OPCODE(i)]);
             switch (GET_OPCODE(i))
             {
                 case OpCode.OP_CLOSE:
-                    Console.Write("{0}", A);
+                    o.Write("{0}", A);
                     break;
 
                 case OpCode.OP_MOVE:
@@ -574,7 +580,7 @@ namespace SharpLua
                 case OpCode.OP_UNM:
                 case OpCode.OP_NOT:
                 case OpCode.OP_RETURN:
-                    Console.Write("{0}, {1}", A, B);
+                    o.Write("{0}, {1}", A, B);
                     break;
 
                 case OpCode.OP_LOADBOOL:
@@ -594,31 +600,31 @@ namespace SharpLua
                 case OpCode.OP_TEST:
                 case OpCode.OP_CALL:
                 case OpCode.OP_TAILCALL:
-                    Console.Write("{0}, {1}, {2}", A, B, C);
+                    o.Write("{0}, {1}, {2}", A, B, C);
                     break;
 
                 case OpCode.OP_LOADK:
-                    Console.Write("{0}, {1}", A, Bx);
+                    o.Write("{0}, {1}", A, Bx);
                     break;
 
                 case OpCode.OP_GETGLOBAL:
                 case OpCode.OP_SETGLOBAL:
                 case OpCode.OP_SETLIST:
                 case OpCode.OP_CLOSURE:
-                    Console.Write("{0}, {1}", A, Bx);
+                    o.Write("{0}, {1}", A, Bx);
                     break;
 
                 case OpCode.OP_TFORLOOP:
-                    Console.Write("{0}, {1}", A, C);
+                    o.Write("{0}, {1}", A, C);
                     break;
 
                 case OpCode.OP_JMP:
                 case OpCode.OP_FORLOOP:
                 case OpCode.OP_FORPREP:
-                    Console.Write("{0}, {1}", A, sBx);
+                    o.Write("{0}, {1}", A, sBx);
                     break;
             }
-            Console.WriteLine();
+            o.WriteLine();
 
         }
 
