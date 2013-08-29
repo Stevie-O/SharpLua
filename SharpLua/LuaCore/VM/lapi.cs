@@ -1056,7 +1056,9 @@ namespace SharpLua
             int cur_buffer_size = 0;
             CharPtr next_data;
             uint _next_data_size;
-            while ( (next_data = reader(L, data, out _next_data_size)) != null ) 
+            while ( (next_data = reader(L, data, out _next_data_size)) != null 
+                    && _next_data_size > 0
+                ) 
             {
                 int next_data_size = checked((int) _next_data_size);
                 if (next_data_size == 0) continue;
