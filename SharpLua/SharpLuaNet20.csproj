@@ -90,6 +90,7 @@
     <Compile Include="LASM\PlatformConfig.cs" />
     <Compile Include="LASM\Verifier.cs" />
     <Compile Include="LuaCore\Libraries\lbitlib.cs" />
+    <Compile Include="LuaCore\RawByteEncoding.cs" />
     <Compile Include="LuaCore\VM\lapi.cs" />
     <Compile Include="LuaCore\VM\lauxlib.cs" />
     <Compile Include="LuaCore\Libraries\lbaselib.cs" />

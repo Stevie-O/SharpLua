@@ -1371,20 +1371,20 @@ namespace SharpLua
 
         public static int fputc(char ch, Stream f)
         {
-            WriteArrayToStream(f, Encoding.UTF8.GetBytes(new char[] { ch }));
+            WriteArrayToStream(f, RawByteEncoding.Instance.GetBytes(new char[] { ch }));
             return (int)ch;
         }
 
         public static int fputs(CharPtr str, Stream stream)
         {
             ArraySegment<char> asciiz = str.ToCString();
-            WriteArrayToStream(stream, Encoding.UTF8.GetBytes(asciiz.Array, asciiz.Offset, asciiz.Count));
+            WriteArrayToStream(stream, RawByteEncoding.Instance.GetBytes(asciiz.Array, asciiz.Offset, asciiz.Count));
             return asciiz.Count;
         }
 
         public static int fputs(string native_str, Stream stream)
         {
-            WriteArrayToStream(stream, Encoding.UTF8.GetBytes(native_str));
+            WriteArrayToStream(stream, RawByteEncoding.Instance.GetBytes(native_str));
             return native_str.Length;
         }
 
