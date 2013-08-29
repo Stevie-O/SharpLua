@@ -1055,7 +1055,7 @@ namespace SharpLua
                 set { chars[index + (int)offset] = value; }
             }
 
-            public static implicit operator CharPtr(string str) { return new CharPtr(str); }
+            public static implicit operator CharPtr(string str) { return CharPtr.FromString(str); }
             public static implicit operator CharPtr(char[] chars) { return new CharPtr(chars); }
 
             public CharPtr()
@@ -1064,7 +1064,13 @@ namespace SharpLua
                 this.index = 0;
             }
 
-            public CharPtr(string str)
+            public static CharPtr FromString(string s)
+            {
+                if (s == null) return null;
+                return new CharPtr(s);
+            }
+
+            private CharPtr(string str)
             {
                 this.chars = (str + '\0').ToCharArray();
                 this.index = 0;
@@ -1232,7 +1238,7 @@ namespace SharpLua
             {
                 // TODO: Is this appropriate? Should we not return null?
                 if (chrptr == null)
-                    return "";
+                    return null;
                 return chrptr.ToString();
             }
 
@@ -1534,9 +1540,51 @@ namespace SharpLua
             return str + index;
         }
 
+        static readonly char[] invalidPathChars = Path.GetInvalidPathChars();
+
+        /// <summary>
+        /// Checks if the specified filename looks the least bit valid.
+        /// </summary>
+        /// <param name="s">Filename to be checked</param>
+        /// <returns>True if it looks OK; false if it contains invalid characters.</returns>
+        static bool FilenameLooksValid(string s)
+        {
+            // try to avoid exceptions from .NET
+            if (string.IsNullOrEmpty(s)) return false;
+            
+            // First, check for any obvious problems
+            //if (s.IndexOfAny(invalidPathChars) >= 0) return false;
+
+            int rooted_status = -1; // -1=unknown 0=not rooted 1=rooted
+            bool got_dirsep = false;
+            bool got_volsep = false;
+            for (int i = 0; i< s.Length; i++) {
+                char ch = s[i];
+                if (Array.IndexOf<char>(invalidPathChars, ch) >= 0)
+                    return false;
+                // MUST CHECK Path.(Alt)DirectorySeparatorChar *first*
+                // This is because, on Linux (under Mono), Path.VolumeSeparator is '/'!
+                if (ch == Path.DirectorySeparatorChar || ch == Path.AltDirectorySeparatorChar) {
+                        got_dirsep = true;
+                    if (rooted_status == -1) { 
+                        rooted_status = (i > 0) ? 0 : 1;
+                    }
+                } else if (ch == Path.VolumeSeparatorChar) {
+                    if (got_dirsep || got_volsep) return false; // volume separator mid-path
+                    got_volsep = true;
+                    rooted_status = 1;
+                }
+            }
+
+            // if we don't find anything wrong, then it looks valid
+            // (not that it necessarily IS, but we couldn't spot anything)
+            return true;
+       }
+
         public static Stream fopen(CharPtr filename, CharPtr mode)
         {
             string str = filename.ToString();
+            if (!FilenameLooksValid(filename)) return null;
             FileMode filemode = FileMode.Open;
             FileAccess fileaccess = (FileAccess)0;
             for (int i = 0; mode[i] != '\0'; i++)

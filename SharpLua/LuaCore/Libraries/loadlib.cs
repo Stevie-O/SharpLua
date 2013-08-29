@@ -363,11 +363,24 @@ namespace SharpLua
         }
 
 
+        static bool has_dirseps(CharPtr buff)
+        {
+            for (int i = buff.index; i < buff.chars.Length; i++)
+            {
+                char ch = buff.chars[i];
+                if (ch == '\0') break;
+                if (ch == Path.DirectorySeparatorChar || ch == Path.AltDirectorySeparatorChar)
+                    return true;
+            }
+            return false;
+        }
+
         private static CharPtr findfile(LuaState L, CharPtr name,
                                          CharPtr pname)
         {
             CharPtr path;
-            name = luaL_gsub(L, name, ".", LUA_DIRSEP);
+            if (!has_dirseps(name))
+                name = luaL_gsub(L, name, ".", LUA_DIRSEP);
             lua_getfield(L, LUA_ENVIRONINDEX, pname);
             path = lua_tostring(L, -1);
             if (path == null)
