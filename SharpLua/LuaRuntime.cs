@@ -137,13 +137,21 @@ namespace SharpLua
         {
             _interface = lua.Interface;
         }
-        
+
+        static string EscapeBackslashes(string s)
+        {
+            if (s == null || s.Length == 0) return s;
+            if (s.IndexOf('\\') < 0) return s;
+            return s.Replace("\\", "\\\\");
+        }
+
         /// <summary>
         /// Performs "require(<paramref name="lib"/>)".
         /// </summary>
         /// <param name="lib">Path and name of library file.</param>
         public static void Require(string lib)
         {
+            lib = EscapeBackslashes(lib);
             Run("require('" + lib + "')");
             
             //Lua.lua_getglobal(_interface.LuaState, "require");
