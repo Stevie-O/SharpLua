@@ -34,6 +34,7 @@ namespace SharpLua
                     col = 0; // incremented 2 lines down
                 }
                 col++;
+                System.Diagnostics.Debug.Print("read(): p={0} => c={1} (U+{2:X4}) [ln={3}, col={4}]", p, c, (int)c, ln, col);
                 p++;
                 return c;
             }
@@ -291,6 +292,7 @@ namespace SharpLua
                 t.Leading = leading;
                 t.Line = ln;
                 t.Column = col;
+                System.Diagnostics.Debug.Print("The shiny new token I'm reading is at ln = {0}, col = {1}", ln, col);
 
                 char c = read();
 
@@ -561,7 +563,7 @@ namespace SharpLua
                     break;
             }
             if (tokens.Count > 0 && tokens[tokens.Count - 1].Type != TokenType.EndOfStream)
-                tokens.Add(new Token { Type = TokenType.EndOfStream });
+                tokens.Add(new Token { Type = TokenType.EndOfStream, Line = ln, Column = col });
             if (tokens.Count > 1) // 2+
                 tokens[tokens.Count - 2].FollowingEoSToken = tokens[tokens.Count - 1];
             return new TokenReader(tokens);

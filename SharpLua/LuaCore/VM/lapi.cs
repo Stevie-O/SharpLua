@@ -983,6 +983,17 @@ namespace SharpLua
 
             public CharPtr lua_Reader(LuaState L, object ud, out uint sz)
             {
+                CharPtr ret = lua_ReaderImpl(L, ud, out sz);
+                Debug.Print("PeekableLuaReader::lua_Reader() returning sz = {0}, buffer = {1}",
+                            sz,
+                            (ret == null) ? "null" :
+                            string.Concat("'", new string(ret.chars, ret.index, (int)sz), "'")
+                            );
+                return ret;
+            }
+
+            CharPtr lua_ReaderImpl(LuaState L, object ud, out uint sz)
+            {
                 if (readahead_buffer != null && readahead_buffer_size != 0)
                 {
                     CharPtr tmp = readahead_buffer;
@@ -1061,10 +1072,11 @@ namespace SharpLua
                 int next_data_size = checked((int) _next_data_size);
                 if (next_data_size == 0) continue;
                 char[] new_buffer = new char[cur_buffer_size + next_data_size];
-                if (cur_buffer_size > 0) {
-                    Buffer.BlockCopy(cur_buffer, 0, new_buffer, 0, cur_buffer_size);
+                if (cur_buffer_size > 0) 
+                {
+                    Array.Copy(cur_buffer, 0, new_buffer, 0, cur_buffer_size);
                 }
-                Buffer.BlockCopy(next_data.chars, next_data.index, new_buffer, cur_buffer_size, next_data_size);
+                Array.Copy(next_data.chars, next_data.index, new_buffer, cur_buffer_size, next_data_size);
                 cur_buffer = new_buffer;
                 cur_buffer_size = cur_buffer.Length;
             }
