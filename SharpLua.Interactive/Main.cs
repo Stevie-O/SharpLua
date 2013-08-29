@@ -60,7 +60,9 @@ namespace SharpLua.Interactive
             
             bool wasSetInteract = false;
             bool wasFileRun = false;
-            for (int i = 0; i < args.Length; i++)
+            // This gets the real, 100%, full command line, including argv[0]
+            args = Environment.GetCommandLineArgs();
+            for (int i = 1; i < args.Length; i++)
             {
                 string arg = args[i];
                 if (arg.ToUpper() == "-I")
@@ -98,13 +100,11 @@ namespace SharpLua.Interactive
                     break;
                 else
                 {
+                    // TODO: should fold (arg == "--") check into here so that the 'arg' table gets set
+                    // for interactive mode as well
                     LuaTable t = LuaRuntime.GetLua().NewTable("arg");
-                    int i3 = 1;
-                    if (args.Length > i + 1)
-                        for (int i2 = i + 1; i2 < args.Length; i2++)
-                            t[i3++] = args[i2];
-                    
-                    t[-1] = System.Windows.Forms.Application.ExecutablePath;
+                    for (int i3 = 0; i3 < args.Length; i3++)
+                        t[i3 - i] = args[i3];
                     t["n"] = t.Keys.Count;
                     
                     if (File.Exists(args[i]))
