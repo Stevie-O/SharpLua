@@ -1202,6 +1202,32 @@ namespace SharpLua
                 return new string(chars, index, chars.Length - 1 - index);
             }
 
+            public string ToStringDebug()
+            {
+                StringBuilder sb = new StringBuilder(this.chars.Length - this.index - 1);
+                char[] tmp = this.chars;
+                for (int i = this.index; i < tmp.Length - 1; i++)
+                {
+                    char ch = tmp[i];
+                    if (ch >= '\xFF') { sb.AppendFormat("\\u{0:x4}", (int)ch); }
+                    else if (ch >= '\x7F') { sb.AppendFormat("\\x{0:x2}", (int)ch); }
+                    else if (ch == '\\') { sb.Append("\\\\"); }
+                    else if (ch >= ' ') { sb.Append(ch); }
+                    else
+                    {
+                        // control character
+                        switch (ch)
+                        {
+                            case '\n': sb.Append("\\n"); break;
+                            case '\r': sb.Append("\\r"); break;
+                            case '\t': sb.Append("\\t"); break;
+                            default: sb.AppendFormat("\\x{0:x2}", (int)ch); break;
+                        }
+                    }
+                }
+                return sb.ToString();
+            }
+
             public static implicit operator String(CharPtr chrptr)
             {
                 // TODO: Is this appropriate? Should we not return null?
