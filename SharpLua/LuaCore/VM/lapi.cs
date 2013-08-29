@@ -1049,16 +1049,14 @@ namespace SharpLua
 
             // Look ahead to see if it's something we're interested in.
             int peek_char = plr.peek(L, plr);
-            if (peek_char != LUA_SIGNATURE[0]) return; // if it's empty, or there's no binary value, there's no work to be done.
+            if (peek_char == LUA_SIGNATURE[0]) return; // if it's empty, or there's no binary value, there's no work to be done.
 
             // Okay, we are.  Read the whole thing into memory RIGHT NOW
             char[] cur_buffer = null;
             int cur_buffer_size = 0;
             CharPtr next_data;
             uint _next_data_size;
-            while ( (next_data = reader(L, data, out _next_data_size)) != null 
-                    && _next_data_size > 0
-                ) 
+            while ( (next_data = reader(L, data, out _next_data_size)) != null ) 
             {
                 int next_data_size = checked((int) _next_data_size);
                 if (next_data_size == 0) continue;
