@@ -987,7 +987,7 @@ namespace SharpLua
                 Debug.Print("PeekableLuaReader::lua_Reader() returning sz = {0}, buffer = {1}",
                             sz,
                             (ret == null) ? "null" :
-                            string.Concat("'", new string(ret.chars, ret.index, (int)sz), "'")
+                            string.Concat("'", ret.ToStringDebug(), "'")
                             );
                 return ret;
             }
