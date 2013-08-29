@@ -1132,10 +1132,12 @@ namespace SharpLua
             public static CharPtr operator +(CharPtr ptr1, CharPtr ptr2)
             {
                 string result = "";
-                for (int i = 0; i < ptr1.chars.Length - 1; i++)
-                    result += ptr1[i];
-                for (int i = 0; i < ptr2.chars.Length - 1; i++)
-                    result += ptr2[i];
+                if (ptr1 != null)
+                    for (int i = 0; i < ptr1.chars.Length - 1; i++)
+                        result += ptr1[i];
+                if (ptr2 != null)
+                    for (int i = 0; i < ptr2.chars.Length - 1; i++)
+                        result += ptr2[i];
                 return new CharPtr(result);
             }
 
