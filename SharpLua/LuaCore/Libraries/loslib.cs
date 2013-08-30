@@ -37,6 +37,8 @@ namespace SharpLua
 
 		private static int os_execute (LuaState L) {
             CharPtr arg = luaL_optstring(L, 1, null);
+            string exec_option;
+
 #if XBOX || SILVERLIGHT
             if (arg == null)
                 return 0;
@@ -44,19 +46,37 @@ namespace SharpLua
             // original lua uses system(), which returns -1 on error
 			return -1;
 #else
+            string shell = Environment.GetEnvironmentVariable("COMSPEC");
+            if (shell == null)
+            {
+                exec_option = "-c ";
+                shell = Environment.GetEnvironmentVariable("SHELL");
+            }
+            else
+            {
+                exec_option = "/s /c";
+            }
+                
             if (arg == null)
-                return 1;
+                return (shell == null) ? 0 : 1;
 
-            //CharPtr strCmdLine = "/C regenresx " + luaL_optstring(L, 1, null);
-                        CharPtr strCmdLine = "/C " + arg;
+            if (shell == null)
+            {
+                luaL_error(L, "os_execute: neither COMSPEC nor SHELL defined");
+                return -1;
+            }
 
-			System.Diagnostics.Process proc = new System.Diagnostics.Process();
+            string cmdline = new string(arg.chars, arg.index, strlen(arg));
+            Debug.Print("os_execute('{0}')", cmdline);
+
+            System.Diagnostics.Process proc = new System.Diagnostics.Process();
 			proc.EnableRaisingEvents=false;
-			proc.StartInfo.FileName = Path.Combine(
-                                    Environment.GetFolderPath(Environment.SpecialFolder.System),
-                                    "cmd.exe"
-                                    );
-			proc.StartInfo.Arguments = strCmdLine.ToString();
+            proc.StartInfo.UseShellExecute = false;
+            proc.StartInfo.FileName = shell;
+			proc.StartInfo.Arguments = string.Format(
+                            "{0}\"{1}\"", exec_option, cmdline
+                            );
+            Debug.Print("\tArguments = '{0}'", proc.StartInfo.Arguments);
 			proc.Start();
 			proc.WaitForExit();
 			lua_pushinteger(L, proc.ExitCode);
