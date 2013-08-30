@@ -367,6 +367,8 @@ namespace SharpLua
         public object[] DoFile(string fileName, object[] args, int arg0_idx)
         {
             int pushed_args = 0;
+
+            int oldTop = LuaDLL.lua_gettop(luaState);
             /*
             if (args == null || args.Length == 0)
             {
@@ -390,7 +392,7 @@ namespace SharpLua
                 for (int i = 0; i < args.Length; i++)
                 {
                     translator.push(luaState, args[i]);
-                    LuaDLL.lua_rawseti(luaState, -2, i - num_real_args);
+                    LuaDLL.lua_rawseti(luaState, -2, i - arg0_idx);
                 }
                 // this was actually in handle_script() from lua.c
                 LuaDLL.lua_setglobal(luaState, "arg");
@@ -398,8 +400,6 @@ namespace SharpLua
 
             if (fileName == "-") fileName = null; // luaL_loadfile will turn this into stdin later
 
-            LuaDLL.lua_pushstdcallcfunction(luaState, tracebackFunction);
-            int oldTop = LuaDLL.lua_gettop(luaState);
             if (LuaDLL.luaL_loadfile(luaState, fileName) == 0)
             {
                 if (pushed_args > 0)
@@ -409,10 +409,15 @@ namespace SharpLua
                     // this can be seen in handle_script in lua.c
                     LuaDLL.lua_insert(luaState, -(pushed_args + 1));
                 }
+
+                int docall_base = LuaDLL.lua_gettop(luaState) - pushed_args;
+                LuaDLL.lua_pushstdcallcfunction(luaState, tracebackFunction);
+                LuaDLL.lua_insert(luaState, docall_base);
+
                 executing = true;
                 try
                 {
-                    if (LuaDLL.lua_pcall(luaState, 0, -1, -2) == 0)
+                    if (LuaDLL.lua_pcall(luaState, pushed_args, -1, docall_base) == 0)
                         return translator.popValues(luaState, oldTop);
                     else
                         ThrowExceptionFromError(oldTop);
@@ -429,7 +434,7 @@ namespace SharpLua
                 //{
                 //    Lua.lua_pushstring(luaState, "unable to open " + fileName + ": file not found");
                 //}
-                ThrowExceptionFromError(oldTop);
+                ThrowExceptionFromError(LuaDLL.lua_gettop(luaState));
             }
 
             return null;            // Never reached - keeps compiler happy
