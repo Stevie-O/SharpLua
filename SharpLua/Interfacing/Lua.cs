@@ -354,16 +354,59 @@ namespace SharpLua
             return 1;
         }
 
-        /*
-         * Excutes a Lua file and returns all the chunk's return
-         * values in an array
-         */
-        public object[] DoFile(string fileName)
+        /// <summary>
+        /// Excutes a Lua file and returns all the chunk's return
+        /// values in an array
+        /// </summary>
+        /// <param name="fileName">File to be executed</param>
+        /// <param name="args">Optional array of arguments.</param>
+        /// <param name="arg0_idx">Offset into <paramref name="args"/> where the 'first' argument resides, minus 1.
+        /// Ignored if args is null or zero-length.
+        /// </param>
+        /// <returns></returns>
+        public object[] DoFile(string fileName, object[] args, int arg0_idx)
         {
+            int pushed_args = 0;
+            /*
+            if (args == null || args.Length == 0)
+            {
+                args = new object[] { fileName };
+                arg0_idx = 0;
+            }
+            */
+
+            if (args != null && args.Length > 0)
+            {
+                    // based on 'getargs' from lua.c
+                // I honestly have no understanding as to how it works, but it seems to, so okay...
+                int num_real_args = args.Length - (arg0_idx + 1);
+                for (int i = arg0_idx + 1; i < args.Length; i++)
+                {
+                    translator.push(luaState, args[i]);
+                    pushed_args++;
+                }
+                // This looks like it constructs the 'args' table.
+                LuaDLL.lua_createtable(luaState, num_real_args, args.Length);
+                for (int i = 0; i < args.Length; i++)
+                {
+                    translator.push(luaState, args[i]);
+                    LuaDLL.lua_rawseti(luaState, -2, i - num_real_args);
+                }
+                // this was actually in handle_script() from lua.c
+                LuaDLL.lua_setglobal(luaState, "arg");
+            }
+
             LuaDLL.lua_pushstdcallcfunction(luaState, tracebackFunction);
             int oldTop = LuaDLL.lua_gettop(luaState);
             if (LuaDLL.luaL_loadfile(luaState, fileName) == 0)
             {
+                if (pushed_args > 0)
+                {
+                    // the 'file' now exists as a function at the top of the stack.
+                    // If we have arguments to pass to it, we need to adjust the stack so they are ABOVE our script
+                    // this can be seen in handle_script in lua.c
+                    LuaDLL.lua_insert(luaState, -(pushed_args + 1));
+                }
                 executing = true;
                 try
                 {
@@ -376,6 +419,9 @@ namespace SharpLua
             }
             else
             {
+                if (pushed_args > 0)
+                    LuaDLL.lua_pop(luaState, pushed_args);
+
                 //string s = Lua.lua_tostring(luaState, -1);
                 //if (s.EndsWith("error #-1"))
                 //{

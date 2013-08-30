@@ -17,10 +17,13 @@ namespace SharpLua
         /// Runs a file on the current LuaInterface object.
         /// </summary>
         /// <param name="luaFile">Path to file.</param>
+        /// <param name="args">Array of arguments to pass to the file (may be null)</param>
+        /// <param name="arg0_idx">Index into args where the script filename is stored.
+        /// May be -1 if it's not actually even in there; should be less than args.Length - 1</param>
         /// <returns></returns>
-        public static object[] RunFile(string luaFile)
+        public static object[] RunFile(string luaFile, object[] args, int arg0_idx)
         {
-            return _interface.DoFile(luaFile);
+            return _interface.DoFile(luaFile, args, arg0_idx);
         }
 
         /// <summary>

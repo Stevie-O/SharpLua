@@ -171,16 +171,18 @@ namespace SharpLua.Interactive
             if (argi < args.Length)
             {
                 did_e = true;
+                // the following is now sorted out by RunFile
+                /*
                 LuaTable t = LuaRuntime.GetLua().NewTable("arg");
                 for (int i3 = 0; i3 < args.Length; i3++)
                     t[i3 - argi] = args[i3];
                 t["n"] = args.Length - argi;
-
+                */
                 if (File.Exists(args[argi]))
                     LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(args[argi]));
                 else
                     LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath));
-                LuaRuntime.RunFile(args[argi]);
+                LuaRuntime.RunFile(args[argi], args, argi);
             }
 
             if (GoInteractive == InteractiveOption.Yes || 
