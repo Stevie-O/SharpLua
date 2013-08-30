@@ -61,7 +61,7 @@ local a = [[
   local a, b, c = ...
   assert(... == 'a' and a == 'a' and b == 'b' and c == 'c')
 ]]
-a = string.format(a, progname)
+a = string.format(a, string.gsub(progname, '\\', '\\\\'))
 prepfile(a)
 RUN('lua "-e " -- %s a b c', prog)
 
