@@ -34,7 +34,7 @@ namespace SharpLua
                     col = 0; // incremented 2 lines down
                 }
                 col++;
-                System.Diagnostics.Debug.Print("read(): p={0} => c={1} (U+{2:X4}) [ln={3}, col={4}]", p, c, (int)c, ln, col);
+                //System.Diagnostics.Debug.Print("read(): p={0} => c={1} (U+{2:X4}) [ln={3}, col={4}]", p, c, (int)c, ln, col);
                 p++;
                 return c;
             }
