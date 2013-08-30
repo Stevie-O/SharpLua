@@ -174,7 +174,7 @@ namespace SharpLua.Interactive
                 LuaTable t = LuaRuntime.GetLua().NewTable("arg");
                 for (int i3 = 0; i3 < args.Length; i3++)
                     t[i3 - argi] = args[i3];
-                t["n"] = t.Keys.Count;
+                t["n"] = args.Length - argi;
 
                 if (File.Exists(args[argi]))
                     LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(args[argi]));
