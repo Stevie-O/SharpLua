@@ -17,15 +17,31 @@ namespace SharpLua.Interactive
         public static string Prompt
         { get; set; }
 
+        static void die(string message)
+        {
+            die(message, 1);
+        }
+        static void die(string message, int exitCode)
+        {
+            Console.Error.WriteLine("Error: {0}", message);
+            Environment.Exit(exitCode);
+        }
+
+        enum InteractiveOption
+        {
+            Auto,
+            Yes,
+            No,
+        }
+
         /// <summary>
         /// A REPL (Read, Eval, Print, Loop function) for #Lua
         /// </summary>
         /// <param name="args">Application startup args</param>
-        public static void Main(string[] args)
+        public static void Main()
         {
-            // TODO: Better arg parsing/checking, make it more like the C lua
 
-            bool GoInteractive = true;
+            InteractiveOption GoInteractive = InteractiveOption.Auto;
 
             // Create global variables
             Application.EnableVisualStyles();
@@ -58,106 +74,89 @@ namespace SharpLua.Interactive
 
             Prompt = "> ";
             
-            bool wasSetInteract = false;
-            bool wasFileRun = false;
             // This gets the real, 100%, full command line, including argv[0]
-            args = Environment.GetCommandLineArgs();
-            for (int i = 1; i < args.Length; i++)
+            string[] args = Environment.GetCommandLineArgs();
+            bool did_e = false;
+            int argi;
+            for (argi = 1; argi < args.Length; argi++)
             {
-                string arg = args[i];
-                if (arg.ToUpper() == "-I")
-                {
-                    GoInteractive = true;
-                    wasSetInteract = true;
-                }
-                else if (arg.ToUpper() == "-NOI")
-                    GoInteractive = false;
-                else if (arg.Substring(0, 2).ToLower() == "-l")
-                {
-                    if (arg.Length == 2)
-                    {
-                        string lib = args[++i];
-                        LuaRuntime.Require(lib);
-                    }
-                    else
-                    {
-                        string lib = arg.Substring(2);
-                        LuaRuntime.Require(lib);
-                    }
-                }
-                else if (arg.ToLower() == "-e")
-                {
-                    if (wasSetInteract == false)
-                        GoInteractive = true;
-                    
-                    LuaRuntime.Run(args[++i]);
-                    
-                    if (wasSetInteract == false)
-                        GoInteractive = false;
-                    wasFileRun = true;
-                }
-                else if (arg == "--")
+                string arg = args[argi];
+                if (arg[0] != '-') break;   // first non-option parameter stops things
+                if (arg.Length == 1) 
+                { 
+                    // bare '-' == use stdin in non-interactive mode
+                    GoInteractive = InteractiveOption.No;
                     break;
+                }
+                if (arg[1] == '-') { argi++; break; } // "--" ends option parameters
+                switch (arg[1]) {
+                    case 'i':
+                        GoInteractive = InteractiveOption.Yes;
+                        break;
+                    case 'N':
+                    case 'n':
+                        GoInteractive = InteractiveOption.No;
+                        break;
+                    case 'l':
+                        string lib;
+                        if (arg.Length == 2)
+                        {
+                            ++argi;
+                            if (argi >= args.Length) die("Missing parameter after -l");
+                            lib = args[argi];
+                        }
+                        else
+                        {
+                            lib = arg.Substring(2);
+                        }
+                        LuaRuntime.Require(lib);
+                        break;
+                    case 'e':
+                        did_e = true;
+                        string expr;
+                        if (arg.Length == 2)
+                        {
+                            ++argi;
+                            if (argi >= args.Length) die("Missing parameter after -e");
+                            expr = args[argi];
+                        }
+                        else
+                        {
+                            expr = arg.Substring(2);
+                        }
+                        LuaRuntime.Run(expr);
+                        break;
+                    case 'v':
+                        LuaRuntime.PrintBanner();
+                        Environment.Exit(0);
+                        break;
+                    default:
+                        die("Undefined option: " + arg);
+                        break;
+                } // switch 
+            } // for
+
+            // if there's any parameters left, they must be a script filename
+            if (argi < args.Length)
+            {
+                did_e = true;
+                LuaTable t = LuaRuntime.GetLua().NewTable("arg");
+                for (int i3 = 0; i3 < args.Length; i3++)
+                    t[i3 - argi] = args[i3];
+                t["n"] = t.Keys.Count;
+
+                if (File.Exists(args[argi]))
+                    LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(args[argi]));
                 else
-                {
-                    // TODO: should fold (arg == "--") check into here so that the 'arg' table gets set
-                    // for interactive mode as well
-                    LuaTable t = LuaRuntime.GetLua().NewTable("arg");
-                    for (int i3 = 0; i3 < args.Length; i3++)
-                        t[i3 - i] = args[i3];
-                    t["n"] = t.Keys.Count;
-                    
-                    if (File.Exists(args[i]))
-                        LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(args[i]));
-                    else
-                        LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath));
-                    LuaRuntime.RunFile(args[i]);
-                    
-                    if (wasSetInteract == false)
-                        GoInteractive = false;
-                    
-                    wasFileRun = true;
-                    break;
-                }
+                    LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath));
+                LuaRuntime.RunFile(args[argi]);
             }
 
-            
-            /*
-            // check command line args
-            if (args.Length > 0)
+            if (GoInteractive == InteractiveOption.Yes || 
+                (GoInteractive == InteractiveOption.Auto && !did_e)
+                )
             {
-                string file = args[0];
-                if (File.Exists(file))
-                {
-                    try
-                    {
-                        LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(file));
-                        LuaRuntime.RunFile(file);
-                        // it loaded successfully
-                        if (args.Length > 1 && args[1].ToUpper() != "-NOI") // possibly interactive mode after
-                            Console.WriteLine("Loaded file '" + Path.GetFileName(file) + "'");
-                    }
-                    catch (Exception error)
-                    {
-                        Console.WriteLine(error.Message);
-                    }
-                    //Console.ReadKey(true);
-                    //return;
-                    // instead, go to interactive
-                }
-                else
-                {
-                    Console.WriteLine(file + " not found.");
-                }
-            }
-            */
-           
-            if (args.Length == 0)
-                GoInteractive = true;
-            
-            if (GoInteractive)
-            {
-                if (args.Length == 0 || wasFileRun == false)
+                if (!did_e)
                     LuaRuntime.PrintBanner();
                 LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(typeof(Program).Assembly.Location));
                 while (true)
