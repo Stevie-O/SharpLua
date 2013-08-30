@@ -41,20 +41,27 @@ namespace SharpLua
             if (arg == null)
                 return 0;
 			luaL_error(L, "os_execute not supported on XBox360/Silverlight");
+            // original lua uses system(), which returns -1 on error
+			return -1;
 #else
             if (arg == null)
                 return 1;
+
             //CharPtr strCmdLine = "/C regenresx " + luaL_optstring(L, 1, null);
                         CharPtr strCmdLine = "/C " + arg;
+
 			System.Diagnostics.Process proc = new System.Diagnostics.Process();
 			proc.EnableRaisingEvents=false;
-			proc.StartInfo.FileName = "CMD.exe";
+			proc.StartInfo.FileName = Path.Combine(
+                                    Environment.GetFolderPath(Environment.SpecialFolder.System),
+                                    "cmd.exe"
+                                    );
 			proc.StartInfo.Arguments = strCmdLine.ToString();
 			proc.Start();
 			proc.WaitForExit();
 			lua_pushinteger(L, proc.ExitCode);
+            return 1;
 #endif
-			return 1;
 		}
 
 
