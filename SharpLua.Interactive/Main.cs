@@ -37,9 +37,40 @@ namespace SharpLua.Interactive
         /// <summary>
         /// A REPL (Read, Eval, Print, Loop function) for #Lua
         /// </summary>
-        /// <param name="args">Application startup args</param>
         public static void Main()
         {
+            if (Debugger.IsAttached)
+            {
+                // if a debugger is attached, ONLY catch LuaException
+                // This way, we can track bugs in other parts of the code.
+                try
+                {
+                    RealMain();
+                }
+                catch (LuaException luaex)
+                {
+                    die(luaex.Message);
+                }
+            }
+            else
+            {
+                try
+                {
+                    RealMain();
+                }
+                catch (Exception ex)
+                {
+                    if (ex is LuaException)
+                        die(ex.Message);
+                    else
+                        die(ex.ToString(), 127);
+                }
+            }
+        }
+
+        static void RealMain()
+        {
+            // TODO: Better arg parsing/checking, make it more like the C lua
 
             InteractiveOption GoInteractive = InteractiveOption.Auto;
 
