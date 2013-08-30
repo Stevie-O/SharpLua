@@ -396,6 +396,8 @@ namespace SharpLua
                 LuaDLL.lua_setglobal(luaState, "arg");
             }
 
+            if (fileName == "-") fileName = null; // luaL_loadfile will turn this into stdin later
+
             LuaDLL.lua_pushstdcallcfunction(luaState, tracebackFunction);
             int oldTop = LuaDLL.lua_gettop(luaState);
             if (LuaDLL.luaL_loadfile(luaState, fileName) == 0)
