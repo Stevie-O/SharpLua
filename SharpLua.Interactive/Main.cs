@@ -197,7 +197,7 @@ namespace SharpLua.Interactive
                     Console.Write(Prompt);
                     string line = Console.ReadLine();
 
-                    if (line == "quit" || line == "exit" || line == "bye")
+                    if (line == "quit" || line == "exit" || line == "bye" || line == null)
                     {
                         break;
                     }
