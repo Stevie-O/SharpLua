@@ -1109,7 +1109,7 @@ namespace SharpLua
 
 #if OVERRIDE_LOAD || true
             //#if false
-            SharpLua_OverrideLoad(L, ref reader, ref data);
+            // SharpLua_OverrideLoad(L, ref reader, ref data);
 #endif
             luaZ_init(L, z, reader, data);
             status = luaD_protectedparser(L, z, chunkname);
