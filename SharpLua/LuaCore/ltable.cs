@@ -64,7 +64,7 @@ namespace SharpLua
 		** for some types, it is better to avoid modulus by power of 2, as
 		** they tend to have many 2 factors.
 		*/
-		public static Node hashmod(Table t, int n) { return gnode(t, (n % ((sizenode(t) - 1) | 1))); }
+		public static Node hashmod(Table t, int n) { return gnode(t, ( (n & int.MaxValue) % ((sizenode(t) - 1) | 1))); }
 
 		public static Node hashpointer(Table t, object p) { return hashmod(t, p.GetHashCode()); }
 
