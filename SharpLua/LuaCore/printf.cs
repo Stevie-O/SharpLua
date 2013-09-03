@@ -674,10 +674,15 @@ namespace AT.MIN
                 }
                 else
                 {
+                    int padCount = FieldLength;
+                    if ((w.Length > 0 && w[0] == '-')
+                        || (PositiveSign || PositiveSpace)
+                        )
+                        padCount--; // leave room for a +, -, or space
                     if ( w.StartsWith( "-" ) )
                         w = w.Substring( 1 );
                     if ( FieldLength != int.MinValue )
-                        w = w.PadLeft( FieldLength - 1, Padding );
+                        w = w.PadLeft( padCount, Padding );
                     if ( IsPositive( Value, true ) )
                         w = ( PositiveSign ?
                              "+" : ( PositiveSpace ? " " : String.Empty ) ) + w;
