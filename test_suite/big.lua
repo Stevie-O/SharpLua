@@ -356,7 +356,8 @@ end
 
 assert(ii == 299)
 
-function xxxx (x) coroutine.yield('b'); return ii+x end
+---function xxxx (x) coroutine.yield('b'); return ii+x end
+function xxxx (x) return ii+x end
 
 assert(xxxx(10) == 309)
 
