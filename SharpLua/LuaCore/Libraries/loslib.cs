@@ -265,7 +265,7 @@ namespace SharpLua
 		  */
 		  CharPtr l = luaL_optstring(L, 1, null);
 		  lua_pushstring(L, "C");
-		  return (l.ToString() == "C") ? 1 : 0;
+		  return (l == null || l.ToString() == "C") ? 1 : 0;
 		}
 
 
