@@ -225,7 +225,10 @@ namespace SharpLua
                 //t = tm;
                 /* else repeat with `tm' */
                 // TODO: potential issue here, it occured all of one time.
-                setobj(L, temp, tm);  /* avoid pointing inside table (may rehash) */
+                if (temp == null)
+                    temp = new TValue(tm.value, tm.tt);
+                else
+                    setobj(L, temp, tm);  /* avoid pointing inside table (may rehash) */
                 t = temp;
             }
             luaG_runerror(L, "loop in settable");
