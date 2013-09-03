@@ -88,7 +88,11 @@ namespace SharpLua
 		private static int os_remove (LuaState L) {
 		  CharPtr filename = luaL_checkstring(L, 1);
 		  int result = 1;
-		  try {File.Delete(filename.ToString());} catch {result = 0;}
+          string s_filename = filename.ToString();
+          try { 
+              if (!File.Exists(s_filename)) { result = 0; }
+              else File.Delete(s_filename);
+          } catch {result = 0;}
 		  return os_pushresult(L, result, filename);
 		}
 
