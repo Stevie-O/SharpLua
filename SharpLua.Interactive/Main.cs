@@ -205,6 +205,9 @@ namespace SharpLua.Interactive
                     {
                         try
                         {
+                            line = line.TrimStart(' ');
+                            if (line.Length == 0) continue;
+                            if (line[0] == '=') { line = "return " + line.Substring(1); }
                             object[] v = LuaRuntime.GetLua().DoString(line, "<stdin>");
                             if (v == null || v.Length == 0)
 #if DEBUG
