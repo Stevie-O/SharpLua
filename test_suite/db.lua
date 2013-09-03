@@ -23,7 +23,7 @@ end
 
 do
   local a = debug.getinfo(print)
-  assert(a.what == "C" and a.short_src == "[C]")
+  assert(a.what == "CLR" and a.short_src == "[CLR]")
   local b = debug.getinfo(test, "SfL")
   assert(b.name == nil and b.what == "Lua" and b.linedefined == 11 and
          b.lastlinedefined == b.linedefined + 10 and
