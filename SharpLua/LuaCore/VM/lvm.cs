@@ -1067,7 +1067,11 @@ namespace SharpLua
                             if (!ttisfunction(ra))
                             {
                                 TValue tm = luaT_gettmbyobj(L, ra, TMS.TM_ITER);
-                                if (!ttisfunction(tm)) luaG_typeerror(L, ra, "iterate");
+                                if (!ttisfunction(tm))
+                                {
+                                    L.savedpc = InstructionPtr.Assign(pc);
+                                    luaG_typeerror(L, ra, "iterate");
+                                }
                                 setobjs2s(L, cb + 1, ra);		//
                                 setobjs2s(L, cb, tm);		//
                                 L.top = cb + 2;			// tag func + the object parameter.
