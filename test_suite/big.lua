@@ -1,5 +1,7 @@
 print "testing string length overflow"
 
+local arg0 = arg[0];
+
 local longs = string.rep("\0", 2^25)
 local function catter (i)
   return assert(loadstring(
@@ -356,8 +358,7 @@ end
 
 assert(ii == 299)
 
----function xxxx (x) coroutine.yield('b'); return ii+x end
-function xxxx (x) return ii+x end
+function xxxx (x) if (string.find(arg0, 'all')) then coroutine.yield('b'); end return ii+x end
 
 assert(xxxx(10) == 309)
 
