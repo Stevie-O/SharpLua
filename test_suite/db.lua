@@ -232,9 +232,9 @@ assert(not debug.getlocal(0, 3))
 assert(not debug.getlocal(0, 0))
 
 function f()
-  assert(select(2, debug.getlocal(2,3)) == 1)
-  assert(not debug.getlocal(2,4))
-  debug.setlocal(2, 3, 10)
+  assert(select(2, debug.getlocal(2,4)) == 1)
+  assert(not debug.getlocal(2,5))
+  debug.setlocal(2, 4, 10)
   return 20
 end
 
@@ -437,9 +437,9 @@ assert(next(x.activelines) == nil)   -- no 'extra' elements
 assert(debug.getinfo(co, 2) == nil)
 local a,b = debug.getlocal(co, 1, 1)
 assert(a == "x" and b == 10)
-a,b = debug.getlocal(co, 1, 2)
+a,b = debug.getlocal(co, 1, 3)
 assert(a == "a" and b == 1)
-debug.setlocal(co, 1, 2, "hi")
+debug.setlocal(co, 1, 3, "hi")
 assert(debug.gethook(co) == foo)
 assert(table.getn(tr) == 2 and
        tr[1] == l.currentline-1 and tr[2] == l.currentline)
