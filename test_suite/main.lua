@@ -136,9 +136,8 @@ print('Skipping test that fails due to interactive-mode differences');
 --RUN([[lua -e"_PROMPT='' _PROMPT2=''" -i < %s > %s]], prog, out)
 --checkout("11\n1\t2\n\n")
   
-print('Skipping test that fails due to ungetc emulation bug');
---prepfile[[#comment in 1st line without \n at the end]]
---RUN("lua %s", prog)
+prepfile[[#comment in 1st line without \n at the end]]
+RUN("lua %s", prog)
 
 prepfile("#comment with a binary file\n"..string.dump(loadstring("print(1)")))
 RUN("lua %s > %s", prog, out)

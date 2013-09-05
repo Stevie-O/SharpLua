@@ -1375,10 +1375,15 @@ namespace SharpLua
             return f.ReadByte();
         }
 
-        public static void ungetc(int c, Stream f)
+        public static int ungetc(int c, Stream f)
         {
+            if (c < 0 || c >= char.MaxValue) return -1;
             if (f.Position > 0)
+            {
                 f.Seek(-1, SeekOrigin.Current);
+                return c;
+            }
+            return -1;
         }
 
 #if XBOX || SILVERLIGHT
