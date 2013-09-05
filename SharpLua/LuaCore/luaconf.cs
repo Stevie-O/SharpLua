@@ -1492,24 +1492,35 @@ namespace SharpLua
 
         public static CharPtr fgets(CharPtr str, Stream stream)
         {
+            return fgets(str, str.chars.Length - str.index, stream);
+        }
+
+        public static CharPtr fgets(CharPtr str, int size, Stream stream)
+        {
             int index = 0;
             try
             {
-                while (true)
+                size--;
+                if (size < 0) return null;
+
+                if (!stream.CanRead) size = 1;
+
+                while (index < size - 1)
                 {
-                    // TODO: this does not account for EOF
-                    str[index] = (char)stream.ReadByte();
-                    if (str[index] == '\n')
+                    int ch = stream.ReadByte();
+                    if (ch < 0) break; // EOF
+                    str[index++] = (char)ch;
+                    if ((char)ch == '\n')
                         break;
-                    if (index >= str.chars.Length)
-                        break;
-                    index++;
                 }
+                str[index] = '\0';
+                return index > 0 ? str : null;
             }
-            catch
+            catch (IOException)
             {
+                str[index - 1] = '\0';
+                return null;
             }
-            return str;
         }
 
         public static double frexp(double x, out int expptr)
