@@ -82,11 +82,11 @@ namespace SharpLua
 
         public static void luaL_getmetatable(LuaState L, CharPtr n) { lua_getfield(L, LUA_REGISTRYINDEX, n); }
 
-        public delegate lua_Number luaL_opt_delegate(LuaState L, int narg);
+        public delegate T luaL_opt_delegate<T>(LuaState L, int narg);
 
-        public static lua_Number luaL_opt(LuaState L, luaL_opt_delegate f, int n, lua_Number d)
+        public static T luaL_opt<T>(LuaState L, luaL_opt_delegate<T> f, int n, T d)
         {
-            return lua_isnoneornil(L, (n != 0) ? d : f(L, n)) ? 1 : 0;
+            return lua_isnoneornil(L, n) ? d : f(L, n);
         }
 
         public delegate lua_Integer luaL_opt_delegate_integer(LuaState L, int narg);

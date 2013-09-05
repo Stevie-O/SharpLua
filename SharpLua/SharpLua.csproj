@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="Decompiler\Decompiler.cs" />
     <Compile Include="Support\NumberReader.cs" />
+    <Compile Include="Support\strftime.cs" />
     <Content Include="Defines.txt" />
     <Compile Include="Interfacing\CheckType.cs" />
     <Compile Include="Interfacing\GenerateEventAssembly.cs" />

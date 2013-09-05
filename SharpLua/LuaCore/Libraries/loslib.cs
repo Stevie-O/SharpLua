@@ -181,17 +181,35 @@ namespace SharpLua
 		  return res;
 		}
 
+        static lua_Number? nullable_checknumber(LuaState L, int narg)
+        {
+            return luaL_checknumber(L, narg);
+        }
+
+        static lua_Number DateTimeToEpoch(DateTime when)
+        {
+            DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            TimeSpan delta = when - epoch;
+            return Math.Floor(delta.TotalSeconds);
+        }
+
+        static DateTime EpochToDateTime(lua_Number epochValue, DateTimeKind kind)
+        {
+            return new DateTime(1970, 1, 1, 0, 0, 0, kind).AddSeconds(epochValue);
+        }
 
 		private static int os_date (LuaState L) {
 		  CharPtr s = luaL_optstring(L, 1, "%c");
-		  DateTime stm;
+          lua_Number? usetime = luaL_opt(L, nullable_checknumber, 2, null);
+          DateTime stm;
+
 		  if (s[0] == '!') {  /* UTC? */
-			stm = DateTime.UtcNow;
+              stm = (usetime == null) ? DateTime.UtcNow : EpochToDateTime(usetime.Value, DateTimeKind.Utc);
 			s.inc();  /* skip `!' */
 		  }
 		  else
-			  stm = DateTime.Now;
-		  if (strcmp(s, "*t") == 0) {
+              stm = (usetime == null) ? DateTime.Now : EpochToDateTime(usetime.Value, DateTimeKind.Local);
+          if (strcmp(s, "*t") == 0) {
 			lua_createtable(L, 0, 9);  /* 9 = number of fields */
 			setfield(L, "sec", stm.Second);
 			setfield(L, "min", stm.Minute);
@@ -199,12 +217,13 @@ namespace SharpLua
 			setfield(L, "day", stm.Day);
 			setfield(L, "month", stm.Month);
 			setfield(L, "year", stm.Year);
-			setfield(L, "wday", (int)stm.DayOfWeek);
+			setfield(L, "wday", (stm.DayOfWeek - DayOfWeek.Sunday) + 1);
 			setfield(L, "yday", stm.DayOfYear);
 			setboolfield(L, "isdst", stm.IsDaylightSavingTime() ? 1 : 0);
 		  }
 		  else {
-			  luaL_error(L, "strftime not implemented yet"); // todo: implement this - mjf
+              string result = strftime(s, stm);
+              lua_pushlstring(L, new CharPtr(result), (uint)result.Length);
 #if false
 			CharPtr cc = new char[3];
 			luaL_Buffer b;
@@ -232,27 +251,27 @@ namespace SharpLua
 		private static int os_time (LuaState L) {
 		  DateTime t;
 		  if (lua_isnoneornil(L, 1))  /* called without args? */
-			t = DateTime.Now;  /* get current time */
+			t = DateTime.UtcNow;  /* get current time */
 		  else {
 			luaL_checktype(L, 1, LUA_TTABLE);
 			lua_settop(L, 1);  /* make sure table is at the top */
 			int sec = getfield(L, "sec", 0);
 			int min = getfield(L, "min", 0);
-			int hour = getfield(L, "hour", 12);
+			int hour = getfield(L, "hour", 0);
 			int day = getfield(L, "day", -1);
-			int month = getfield(L, "month", -1) - 1;
-			int year = getfield(L, "year", -1) - 1900;
-			int isdst = getboolfield(L, "isdst");	// todo: implement this - mjf
-			t = new DateTime(year, month, day, hour, min, sec);
+			int month = getfield(L, "month", -1);
+			int year = getfield(L, "year", -1);
+			bool isdst = getboolfield(L, "isdst") != 0;
+            t = new DateTime(year, month, day, hour, min, sec, DateTimeKind.Utc);
 		  }
-		  lua_pushnumber(L, t.Ticks);
+		  lua_pushnumber(L, DateTimeToEpoch(t));
 		  return 1;
 		}
 
 
 		private static int os_difftime (LuaState L) {
-		  long ticks = (long)luaL_checknumber(L, 1) - (long)luaL_optnumber(L, 2, 0);
-		  lua_pushnumber(L, ticks/TimeSpan.TicksPerSecond);
+		  long seconds = (long)(luaL_checknumber(L, 1) - luaL_optnumber(L, 2, 0));
+		  lua_pushnumber(L, seconds);
 		  return 1;
 		}
 
