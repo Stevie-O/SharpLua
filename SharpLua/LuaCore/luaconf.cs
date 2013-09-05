@@ -1606,6 +1606,11 @@ namespace SharpLua
             for (int i = 0; mode[i] != '\0'; i++)
                 switch (mode[i])
                 {
+                    case 'a':
+                        fileaccess = FileAccess.Write;
+                        filemode = FileMode.Append;
+                        break;
+
                     case 'r':
                         fileaccess = fileaccess | FileAccess.Read;
                         if (!File.Exists(str))
