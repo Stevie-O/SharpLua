@@ -104,11 +104,11 @@ namespace SharpLua
 		  try
 		  {
 			  File.Move(fromname.ToString(), toname.ToString());
-			  result = 0;
+			  result = 1;
 		  }
 		  catch
 		  {
-			  result = 1; // todo: this should be a proper error code
+			  result = 0; // todo: this should be a proper error code
 		  }
 		  return os_pushresult(L, result, fromname);
 		}
