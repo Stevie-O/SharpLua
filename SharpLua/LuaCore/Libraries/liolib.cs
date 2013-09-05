@@ -274,10 +274,10 @@ namespace SharpLua
 
         private static int read_number (LuaState L, Stream f) {
             //lua_Number d;
-            object[] parms = { (object)(double)0.0 };
-            if (fscanf(f, LUA_NUMBER_SCAN, parms) == 1)
+            double value;
+            if (fscanf(f, LUA_NUMBER_SCAN, out value) == 1)
             {
-                lua_pushnumber(L, (double)parms[0]);
+                lua_pushnumber(L, value);
                 return 1;
             }
             else {

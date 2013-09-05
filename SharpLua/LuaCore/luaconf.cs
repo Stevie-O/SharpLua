@@ -951,50 +951,6 @@ namespace SharpLua
             return (c >= (byte)' ') && (c <= (byte)127);
         }
 
-        public static int parse_scanf(string str, CharPtr fmt, params object[] argp)
-        {
-            int parm_index = 0;
-            int index = 0;
-            while (fmt[index] != 0)
-            {
-                if (fmt[index++] == '%')
-                    switch (fmt[index++])
-                    {
-                        case 's':
-                            {
-                                argp[parm_index++] = str;
-                                break;
-                            }
-                        case 'c':
-                            {
-                                argp[parm_index++] = Convert.ToChar(str, Culture("en-US"));
-                                break;
-                            }
-                        case 'd':
-                            {
-                                argp[parm_index++] = Convert.ToInt32(str, Culture("en-US"));
-                                break;
-                            }
-                        case 'l':
-                            {
-                                argp[parm_index++] = Convert.ToDouble(str, Culture("en-US"));
-                                break;
-                            }
-                        case 'f':
-                            {
-                                argp[parm_index++] = Convert.ToDouble(str, Culture("en-US"));
-                                break;
-                            }
-                        //case 'p':
-                        //    {
-                        //        result += "(pointer)";
-                        //        break;
-                        //    }
-                    }
-            }
-            return parm_index;
-        }
-
         public static void printf(CharPtr str, params object[] argv)
         {
             Tools.fprintf(stdout, str.ToString(), argv);
@@ -1372,12 +1328,30 @@ namespace SharpLua
 
         public static int getc(Stream f)
         {
-            return f.ReadByte();
+            return fgetc(f);
+        }
+
+        public static int fgetc(Stream f)
+        {
+            try
+            {
+                if (!f.CanRead) return -1;
+                return f.ReadByte();
+            }
+            catch (IOException)
+            {
+                return -1;
+            }
         }
 
         public static int ungetc(int c, Stream f)
         {
             if (c < 0 || c >= char.MaxValue) return -1;
+            return ungetc((char)c, f);
+        }
+
+        public static int ungetc(char c, Stream f)
+        {
             if (f.Position > 0)
             {
                 f.Seek(-1, SeekOrigin.Current);
@@ -1667,11 +1641,10 @@ namespace SharpLua
         }
 #endif
 
-        public static int fscanf(Stream f, CharPtr format, params object[] argp)
+        public static int fscanf(Stream f, string format, out double result)
         {
-            // TODO: FIX THIS! this is so completely broken I don't even know where to begin
-            string str = Console.ReadLine();
-            return parse_scanf(str, format, argp);
+            Debug.Assert(format == LUA_NUMBER_SCAN);
+            return NumberReader.ReadNumber(f, out result);
         }
 
         public static int fseek(Stream f, long offset, int origin)
