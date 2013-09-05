@@ -118,7 +118,9 @@ namespace SharpLua
 #if XBOX
 		  luaL_error(L, "os_tmpname not supported on Xbox360");
 #else
-		  lua_pushstring(L, Path.GetTempFileName());
+          string filename = Path.GetTempFileName();
+          File.Delete(filename);
+		  lua_pushstring(L, filename);
 #endif
 		  return 1;
 		}
