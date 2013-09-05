@@ -53,6 +53,7 @@ for i=1,120 do
     assert(io.open(file, 'r'))
     io.lines(file)
   end
+  io.input(io.stdin);
   collectgarbage()
 end
 
