@@ -85,8 +85,10 @@ assert(not pcall(io.close, f))   -- error trying to close again
 assert(tostring(f) == "file (closed)")
 assert(io.type(f) == "closed file")
 io.input(file)
-f = io.open(otherfile):lines()
+local ff = io.open(otherfile);
+f = ff:lines()
 for l in io.lines() do assert(l == f()) end
+ff:close();
 assert(os.remove(otherfile))
 
 io.input(file)
