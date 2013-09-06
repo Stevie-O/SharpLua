@@ -277,45 +277,35 @@ namespace SharpLua
             return DoString(chunk, "chunk");
         }
 
+        delegate int LoadBufferFunc<T>(Lua.LuaState L, T chunk, int chunkSize, string chunkName);
+
         /// <summary>
-        /// Executes a Lua chnk and returns all the chunk's return values in an array.
+        /// Executes a Lua chunk (specified as a .NET string) and returns all the chunk's return values in an array.
         /// </summary>
         /// <param name="chunk">Chunk to execute</param>
         /// <param name="chunkName">Name to associate with the chunk</param>
-        /// <returns></returns>
-        public object[] DoString(string chunk, string chunkName)
+        /// <param name="args">Optional set of arguments to pass to chunk (accessible from '...')</param>
+        /// <returns>Array of objects as returned by the chunk.</returns>
+        public object[] DoString(string chunk, string chunkName, params object[] args)
         {
-            LuaDLL.lua_pushstdcallcfunction(luaState, tracebackFunction);
-            int oldTop = LuaDLL.lua_gettop(luaState);
-            executing = true;
-            if (LuaDLL.luaL_loadbuffer(luaState, chunk, chunk.Length, chunkName) == 0)
-            {
-                try
-                {
-                    if (LuaDLL.lua_pcall(luaState, 0, -1, -2) == 0)
-                        return translator.popValues(luaState, oldTop);
-                    else
-                        ThrowExceptionFromError(oldTop);
-                }
-                finally { executing = false; }
-            }
-            else
-                ThrowExceptionFromError(oldTop);
-
-            return null; // Never reached - keeps compiler happy
+            return DoBufferCommon<string>(LuaDLL.luaL_loadbuffer, chunk, chunk.Length, chunkName, args, -1);
         }
-        
+
         public object[] DoString(char[] chunk)
         {
             return DoString(chunk, "chunk");
         }
-        
-        public object[] DoString(char[] chunk, string chunkName)
+
+        /// <summary>
+        /// Executes a Lua chunk (specified in a character array) and returns all the chunk's return values in an array.
+        /// </summary>
+        /// <param name="chunk">Chunk to execute</param>
+        /// <param name="chunkName">Name to associate with the chunk</param>
+        /// <param name="args">Optional set of arguments to pass to chunk (accessible from '...')</param>
+        /// <returns>Array of objects as returned by the chunk.</returns>
+        public object[] DoString(char[] chunk, string chunkName, params object[] args)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (char c in chunk)
-                sb.Append(c);
-            return DoString(sb.ToString(), chunkName);
+            return DoBufferCommon<char[]>(LuaDLL.luaL_loadbuffer, chunk, chunk.Length, chunkName, args, -1);
         }
 
         private int traceback(SharpLua.Lua.LuaState luaState)
@@ -340,20 +330,24 @@ namespace SharpLua
         /// <returns></returns>
         public object[] DoFile(string fileName, object[] args, int arg0_idx)
         {
+            if (fileName == "-") fileName = null;
+            return DoBufferCommon<string>(luaL_loadfile_shim, null, 0, fileName, args, arg0_idx);
+        }
+
+        static int luaL_loadfile_shim(Lua.LuaState L, string unused1, int unused2, string filename) 
+        {
+            return LuaDLL.luaL_loadfile(L, filename);
+        }
+
+        object[] DoBufferCommon<T>(LoadBufferFunc<T> loadfunc, T chunk, int chunksize, string chunkName, object[] args, int arg0_idx)
+        {
             int pushed_args = 0;
 
             int oldTop = LuaDLL.lua_gettop(luaState);
-            /*
-            if (args == null || args.Length == 0)
-            {
-                args = new object[] { fileName };
-                arg0_idx = 0;
-            }
-            */
 
-            if (args != null && args.Length > 0)
+            if (args != null)
             {
-                    // based on 'getargs' from lua.c
+                // based on 'getargs' from lua.c
                 // I honestly have no understanding as to how it works, but it seems to, so okay...
                 int num_real_args = args.Length - (arg0_idx + 1);
                 for (int i = arg0_idx + 1; i < args.Length; i++)
@@ -361,20 +355,21 @@ namespace SharpLua
                     translator.push(luaState, args[i]);
                     pushed_args++;
                 }
-                // This looks like it constructs the 'args' table.
-                LuaDLL.lua_createtable(luaState, num_real_args, args.Length);
-                for (int i = 0; i < args.Length; i++)
+                if (arg0_idx >= 0)
                 {
-                    translator.push(luaState, args[i]);
-                    LuaDLL.lua_rawseti(luaState, -2, i - arg0_idx);
+                    // This looks like it constructs the 'args' table.
+                    LuaDLL.lua_createtable(luaState, num_real_args, args.Length);
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        translator.push(luaState, args[i]);
+                        LuaDLL.lua_rawseti(luaState, -2, i - arg0_idx);
+                    }
+                    // this was actually in handle_script() from lua.c
+                    LuaDLL.lua_setglobal(luaState, "arg");
                 }
-                // this was actually in handle_script() from lua.c
-                LuaDLL.lua_setglobal(luaState, "arg");
             }
 
-            if (fileName == "-") fileName = null; // luaL_loadfile will turn this into stdin later
-
-            if (LuaDLL.luaL_loadfile(luaState, fileName) == 0)
+            if (loadfunc(luaState, chunk, chunksize, chunkName) == 0)
             {
                 if (pushed_args > 0)
                 {

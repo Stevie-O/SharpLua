@@ -623,6 +623,10 @@ sealed class LuaGCOptions
         {
             return SharpLua.Lua.luaL_loadbuffer(luaState, buff, (uint)size, name);
         }
+        public static int luaL_loadbuffer(SharpLua.Lua.LuaState luaState, char[] buff, int size, string name)
+        {
+            return SharpLua.Lua.luaL_loadbuffer(luaState, buff, (uint)size, name);
+        }
         //[DllImport(LUALIBDLL,CallingConvention=CallingConvention.Cdecl)]
         public static int luaL_loadfile(SharpLua.Lua.LuaState luaState, string filename)
         {
