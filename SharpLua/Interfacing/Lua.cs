@@ -305,19 +305,6 @@ namespace SharpLua
             return null; // Never reached - keeps compiler happy
         }
         
-        public object[] DoString(byte[] chunk)
-        {
-            return DoString(chunk, "chunk");
-        }
-        
-        public object[] DoString(byte[] chunk, string chunkName)
-        {
-            StringBuilder sb = new StringBuilder();
-            foreach (byte b in chunk)
-                sb.Append((char)b);
-            return DoString(sb.ToString(), chunkName);
-        }
-        
         public object[] DoString(char[] chunk)
         {
             return DoString(chunk, "chunk");
@@ -328,19 +315,6 @@ namespace SharpLua
             StringBuilder sb = new StringBuilder();
             foreach (char c in chunk)
                 sb.Append(c);
-            return DoString(sb.ToString(), chunkName);
-        }
-        
-        public object[] DoString(int[] chunk)
-        {
-            return DoString(chunk, "chunk");
-        }
-        
-        public object[] DoString(int[] chunk, string chunkName)
-        {
-            StringBuilder sb = new StringBuilder();
-            foreach (int i in chunk)
-                sb.Append((char)i);
             return DoString(sb.ToString(), chunkName);
         }
 
