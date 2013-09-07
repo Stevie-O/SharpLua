@@ -79,7 +79,6 @@ namespace SharpLua
             }
         }
 
-
         public System.Collections.IDictionaryEnumerator GetEnumerator()
         {
             return _Interpreter.GetTableDict(this).GetEnumerator();

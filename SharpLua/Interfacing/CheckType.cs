@@ -41,7 +41,7 @@ namespace SharpLua
             extractValues.Add(typeof(LuaFunction).TypeHandle.Value.ToInt64(), new ExtractValue(getAsFunction));
             extractValues.Add(typeof(LuaTable).TypeHandle.Value.ToInt64(), new ExtractValue(getAsTable));
             extractValues.Add(typeof(LuaUserData).TypeHandle.Value.ToInt64(), new ExtractValue(getAsUserdata));
-            
+
             extractNull = new ExtractValue(getNull);
             extractNetObject = new ExtractValue(getAsNetObject);
         }
@@ -64,6 +64,165 @@ namespace SharpLua
                 return extractValues[runtimeHandleValue];
             else
                 return extractNetObject;
+        }
+
+        /// <summary>
+        /// Generator that yields a list of all Types we could find that match the given name.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        static IEnumerable<Type> FindTypes(string name)
+        {
+            Type t = Type.GetType(name, false);
+            if (t != null) yield return t;
+            foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                t = a.GetType(name, false);
+                if (t != null) yield return t;
+            }
+        }
+
+        /// <summary>
+        /// Tries to find a type with the specified name, that are derived from the specified base type
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="desiredBaseType"></param>
+        /// <returns></returns>
+        static Type FindCompatibleType(string name, Type desiredBaseType)
+        {
+            foreach (Type t in FindTypes(name))
+            {
+                if (!desiredBaseType.IsAssignableFrom(t)) continue;
+                return t;
+            }
+            return null;
+        }
+
+        class NetCtorFactory
+        {
+            readonly ConstructorInfo ci;
+            readonly CheckType owner;
+
+            ObjectTranslator xlat { get { return owner.translator; } }
+
+            /// <summary>
+            /// Constructs a NetObjectFactory that invokes the specified constructor to do its job.
+            /// </summary>
+            /// <param name="ci">Constructor to be used</param>
+            /// <param name="owner">CheckType instance providing access to an ObjectTranslator and other stuff</param>
+            public NetCtorFactory(ConstructorInfo ci, CheckType owner)
+            {
+                this.ci = ci;
+                this.owner = owner;
+            }
+
+            /// <summary>
+            /// Constructs an object by invoking a method that takes a single argument of type LuaTable.
+            /// </summary>
+            /// <param name="L"></param>
+            /// <param name="stackPos"></param>
+            /// <returns></returns>
+            public object ConstructFromLuaTable(Lua.LuaState L, int stackPos)
+            {
+                LuaTable ltbl = xlat.getTable(L, stackPos);
+                return ci.Invoke(new object[] { ltbl });
+            }
+
+            /// <summary>
+            /// Constructs an object by invoking a method that takes zero arguments, then initializes
+            /// properties and fields of the object from the provided LuaTable.
+            /// </summary>
+            /// <param name="L"></param>
+            /// <param name="stackPos"></param>
+            /// <returns></returns>
+            /// <remarks>
+            /// The implementation of this method is extremely ugly, but it does the trick.
+            /// </remarks>
+            public object ConstructAndInit(Lua.LuaState L, int stackPos)
+            {
+                object obj = ci.Invoke(null);
+                if (obj == null)
+                {
+                    LuaDLL.luaL_error(L, string.Format("The constructor method {0} returned null!", ci));
+                    return null;
+                }
+                Type t = obj.GetType();
+
+                LuaDLL.lua_pushvalue(L, stackPos);
+                LuaDLL.lua_pushnil(L); // start at the beginning
+                while (LuaDLL.lua_next(L, -2) != 0)
+                {
+                    // okay, now -2 is the key and -1 is the value
+
+                    // coerce it into stringhood
+                    LuaDLL.lua_pushvalue(L, -2);    // copy it
+                    string key = LuaDLL.lua_tostring(L, -1);    // convert it to a string
+                    LuaDLL.lua_pop(L, 1);              // return it
+
+                    if (key == null)
+                    {
+                        LuaDLL.luaL_error(L, string.Format("Error trying to convert key of type {0} to a string", LuaDLL.luaL_typename(L, -2)));
+                    }
+                    else
+                    {
+                        PropertyInfo pi;
+                        FieldInfo fi;
+                        if ((pi = t.GetProperty(key)) != null)
+                        {
+                            ExtractValue extractor = owner.checkType(L, -1, pi.PropertyType);
+                            if (extractor == null)
+                                LuaDLL.luaL_error(L, string.Format("Error trying to convert object of type {0} to .NET type {1}", LuaDLL.luaL_typename(L, -1), pi.PropertyType.FullName));
+                            else
+                                pi.SetValue(obj, extractor(L, -1), null);
+                        }
+                        else if ((fi = t.GetField(key)) != null)
+                        {
+                            ExtractValue extractor = owner.checkType(L, -1, fi.FieldType);
+                            if (extractor == null)
+                                LuaDLL.luaL_error(L, string.Format("Error trying to convert object of type {0} to .NET type {1}", LuaDLL.luaL_typename(L, -1), fi.FieldType.FullName));
+                            else
+                                fi.SetValue(obj, extractor(L, -1));
+                        }
+                        else
+                            LuaDLL.luaL_error(L, string.Format(".NET type {0} does not contain a public field or property named '{1}'", t.FullName, key));
+                    }
+                    LuaDLL.lua_pop(L, 1);
+                }
+                return obj;
+            } // method ConstructAndInit
+        }
+
+        /// <summary>
+        /// Attempts to convert a Lua table (located on the stack of L at <paramref name="stackPos"/>) to a .NET object.
+        /// </summary>
+        /// <param name="desiredType">The desired object type.</param>
+        /// <param name="L">Lua state</param>
+        /// <param name="stackPos">Location in <paramref name="state"/>'s stack where the table lives</param>
+        /// <returns>An ExtractValue delegate that may be called to construct the object, or null.</returns>
+        /// <remarks>
+        /// 
+        /// </remarks>
+        ExtractValue CheckConstructable(Type desiredType, Lua.LuaState L, int stackPos)
+        {
+            // First, allow the table to include a '__type' element declaring the desired .NET type we're interested in.
+            LuaDLL.lua_getfield(L, stackPos, "__type");
+            string __type = LuaDLL.lua_tostring(L, -1);
+            LuaDLL.lua_pop(L, 1); // pop the getfield
+            if (__type != null)
+            {
+                desiredType = FindCompatibleType(__type, desiredType);
+                if (desiredType == null) return null;
+            }
+
+            ConstructorInfo ctor;
+            // First: If there is a constructor that takes a LuaTable, then use that
+            ctor = desiredType.GetConstructor(new Type[] { typeof(LuaTable) });
+            if (ctor != null) { return new NetCtorFactory(ctor, this).ConstructFromLuaTable; }
+
+            ctor = desiredType.GetConstructor(Type.EmptyTypes);
+            if (ctor != null) { return new NetCtorFactory(ctor, this).ConstructAndInit; }
+
+            return null;
         }
 
         internal ExtractValue checkType(SharpLua.Lua.LuaState luaState, int stackPos, Type paramType)
@@ -101,7 +260,7 @@ namespace SharpLua
                 //else // suppress CS0642
                 ;//an unsupported type was encountered
             }
-            
+
             if (LuaDLL.lua_isnil(luaState, stackPos))
             {
                 return extractNull;
@@ -172,7 +331,11 @@ namespace SharpLua
                         return extractNetObject;
                 }
                 else
+                {
+                    ExtractValue convextract = CheckConstructable(paramType, luaState, stackPos);
+                    if (convextract != null) return convextract;
                     return null;
+                }
             }
             else
             {
@@ -280,7 +443,7 @@ namespace SharpLua
         private object getAsString(SharpLua.Lua.LuaState luaState, int stackPos)
         {
             string retVal = LuaDLL.lua_tostring(luaState, stackPos);
-            if (retVal == "" && !LuaDLL.lua_isstring(luaState, stackPos)) 
+            if (retVal == "" && !LuaDLL.lua_isstring(luaState, stackPos))
                 return null;
             return retVal;
         }
@@ -337,7 +500,7 @@ namespace SharpLua
             }
             return obj;
         }
-        
+
         public object getNull(Lua.LuaState luaState, int stackPos)
         {
             if (LuaDLL.lua_isnil(luaState, stackPos))

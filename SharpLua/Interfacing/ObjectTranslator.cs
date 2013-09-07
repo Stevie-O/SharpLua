@@ -728,6 +728,16 @@ namespace SharpLua
             else
                 return null;
         }
+        /// <summary>
+        /// Assuming that, for the stack of the Lua instance identified by luaState, 'index' refers to a table,
+        /// </summary>
+        /// <param name="luaState"></param>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        internal object createNetObject(SharpLua.Lua.LuaState luaState, int index, Type t)
+        {
+            throw new NotImplementedException();
+        }
         /*
          * Gets the CLR object in the index positon of the Lua stack. Returns
          * delegates as is.
