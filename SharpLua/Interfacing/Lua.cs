@@ -387,7 +387,7 @@ namespace SharpLua
                 try
                 {
                     if (LuaDLL.lua_pcall(luaState, pushed_args, -1, docall_base) == 0)
-                        return translator.popValues(luaState, oldTop);
+                        return translator.popValues(luaState, oldTop + 1);
                     else
                         ThrowExceptionFromError(oldTop);
                 }
@@ -790,6 +790,11 @@ namespace SharpLua
             translator.push(luaState, val);
             LuaDLL.lua_settable(luaState, -3);
             LuaDLL.lua_settop(luaState, oldTop);
+        }
+
+        public LuaFunction RegisterFunction(string path, Delegate d)
+        {
+            return RegisterFunction(path, d.Target, d.Method);
         }
 
         /*
