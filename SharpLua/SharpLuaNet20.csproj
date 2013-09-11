@@ -44,13 +44,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Decompiler\Decompiler.cs" />
+    <Compile Include="Support\NumberReader.cs" />
+    <Compile Include="Support\strftime.cs" />
     <Content Include="Defines.txt" />
     <Compile Include="Interfacing\CheckType.cs" />
     <Compile Include="Interfacing\GenerateEventAssembly.cs" />
