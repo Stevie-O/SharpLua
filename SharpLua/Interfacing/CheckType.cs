@@ -192,6 +192,57 @@ namespace SharpLua
             } // method ConstructAndInit
         }
 
+        class NetArrayFactory
+        {
+            readonly Type arrayType;
+            readonly CheckType owner;
+
+            ObjectTranslator xlat { get { return owner.translator; } }
+
+            /// <summary>
+            /// Constructs a NetObjectFactory that invokes the specified constructor to do its job.
+            /// </summary>
+            /// <param name="ci">Constructor to be used</param>
+            /// <param name="owner">CheckType instance providing access to an ObjectTranslator and other stuff</param>
+            public NetArrayFactory(Type arrayType, CheckType owner)
+            {
+                this.arrayType = arrayType;
+                this.owner = owner;
+            }
+
+            /// <summary>
+            /// Constructs an array from a table.
+            /// </summary>
+            /// <param name="L"></param>
+            /// <param name="stackPos"></param>
+            /// <returns></returns>
+            /// <remarks>
+            /// The implementation of this method is extremely ugly, but it does the trick.
+            /// </remarks>
+            public object ConstructArray(Lua.LuaState L, int stackPos)
+            {
+                Type elt = arrayType.GetElementType();
+                int dim = LuaDLL.lua_objlen(L, stackPos);
+                Array a = Array.CreateInstance(elt, dim);
+
+                int index = 1;
+                LuaDLL.lua_rawgeti(L, stackPos, index);
+                while (!LuaDLL.lua_isnil(L, -1))
+                {
+                    ExtractValue ev = owner.checkType(L, -1, elt);
+                    if (ev == null)
+                        LuaDLL.luaL_error(L, string.Format("Error trying to convert value of type {0} to .NET {1}", LuaDLL.luaL_typename(L, -1), elt.FullName));
+                    a.SetValue(ev(L, -1), index - 1);
+                    LuaDLL.lua_pop(L, 1);
+                    index++;
+                    LuaDLL.lua_rawgeti(L, stackPos, index);
+                }
+                LuaDLL.lua_pop(L, 1);
+                return a;
+            } // method ConstructAndInit
+
+        }
+
         /// <summary>
         /// Attempts to convert a Lua table (located on the stack of L at <paramref name="stackPos"/>) to a .NET object.
         /// </summary>
@@ -213,6 +264,9 @@ namespace SharpLua
                 desiredType = FindCompatibleType(__type, desiredType);
                 if (desiredType == null) return null;
             }
+
+            if (desiredType.IsArray)
+                return new NetArrayFactory(desiredType, this).ConstructArray;
 
             ConstructorInfo ctor;
             // First: If there is a constructor that takes a LuaTable, then use that
