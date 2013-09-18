@@ -9,6 +9,7 @@ namespace SharpLua
     using System.Reflection;
     using System.Threading;
     using System.Linq;
+    using System.Diagnostics;
 
     /*
      * Main class of LuaInterface
@@ -25,7 +26,7 @@ namespace SharpLua
     /// <summary>
     /// The main interface to Lua. Provides a much more user-friendly API than the raw Lua API.
     /// </summary>
-    public class LuaInterface : IDisposable
+    public class LuaInterface : IDisposable, IReturnListHandler
     {
         /*readonly */
         private SharpLua.Lua.LuaState luaState;
@@ -288,7 +289,12 @@ namespace SharpLua
         /// <returns>Array of objects as returned by the chunk.</returns>
         public object[] DoString(string chunk, string chunkName, params object[] args)
         {
-            return DoBufferCommon<string>(LuaDLL.luaL_loadbuffer, chunk, chunk.Length, chunkName, args, -1);
+            return DoBufferCommon<string>(LuaDLL.luaL_loadbuffer, chunk, chunk.Length, chunkName, args, -1, this);
+        }
+
+        public object[] DoString(string chunk, string chunkName, object[] args, IReturnListHandler retxlat)
+        {
+            return DoBufferCommon<string>(LuaDLL.luaL_loadbuffer, chunk, chunk.Length, chunkName, args, -1, retxlat);
         }
 
         public object[] DoString(char[] chunk)
@@ -339,12 +345,9 @@ namespace SharpLua
             return LuaDLL.luaL_loadfile(L, filename);
         }
 
-        object[] DoBufferCommon<T>(LoadBufferFunc<T> loadfunc, T chunk, int chunksize, string chunkName, object[] args, int arg0_idx)
+        public int PushChunkArguments(object[] args, int arg0_idx)
         {
             int pushed_args = 0;
-
-            int oldTop = LuaDLL.lua_gettop(luaState);
-
             if (args != null)
             {
                 // based on 'getargs' from lua.c
@@ -369,6 +372,22 @@ namespace SharpLua
                 }
             }
 
+            return pushed_args;
+        }
+
+        object[] DoBufferCommon<T>(LoadBufferFunc<T> loadfunc, T chunk, int chunksize, string chunkName, object[] args, int arg0_idx)
+        {
+            return DoBufferCommon<T>(loadfunc, chunk, chunksize, chunkName, args, arg0_idx, this);
+        }
+        
+
+        object[] DoBufferCommon<T>(LoadBufferFunc<T> loadfunc, T chunk, int chunksize, string chunkName, object[] args, int arg0_idx, IReturnListHandler xlate)
+        {
+            if (xlate == null) xlate = this;
+            int oldTop = LuaDLL.lua_gettop(luaState);
+
+            int pushed_args = PushChunkArguments(args, arg0_idx);
+
             if (loadfunc(luaState, chunk, chunksize, chunkName) == 0)
             {
                 if (pushed_args > 0)
@@ -386,8 +405,13 @@ namespace SharpLua
                 executing = true;
                 try
                 {
-                    if (LuaDLL.lua_pcall(luaState, pushed_args, -1, docall_base) == 0)
-                        return translator.popValues(luaState, oldTop + 1);
+                    if (LuaDLL.lua_pcall(luaState, pushed_args, xlate.NumResults, docall_base) == 0)
+                    {
+                        object[] result = xlate.PopValues(luaState, oldTop + 1);
+                        Debug.Assert(luaState.top >= oldTop + 1);
+                        LuaDLL.lua_settop(luaState, oldTop);
+                        return result;
+                    }
                     else
                         ThrowExceptionFromError(oldTop);
                 }
@@ -917,5 +941,19 @@ namespace SharpLua
             System.GC.Collect();
             System.GC.WaitForPendingFinalizers();
         }
+
+        #region IReturnListHandler Members
+
+        int IReturnListHandler.NumResults
+        {
+            get { return -1; }
+        }
+
+        object[] IReturnListHandler.PopValues(Lua.LuaState L, int stktop)
+        {
+            return translator.popValues(L, stktop);
+        }
+
+        #endregion
     }
 }
