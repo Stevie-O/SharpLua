@@ -407,8 +407,8 @@ namespace SharpLua
                 {
                     if (LuaDLL.lua_pcall(luaState, pushed_args, xlate.NumResults, docall_base) == 0)
                     {
-                        object[] result = xlate.PopValues(luaState, oldTop + 1);
-                        Debug.Assert(luaState.top >= oldTop + 1);
+                        object[] result = xlate.PopValues(luaState, oldTop + 2);
+                        Debug.Assert(luaState.top >= oldTop + 2);
                         LuaDLL.lua_settop(luaState, oldTop);
                         return result;
                     }
@@ -951,7 +951,7 @@ namespace SharpLua
 
         object[] IReturnListHandler.PopValues(Lua.LuaState L, int stktop)
         {
-            return translator.popValues(L, stktop);
+            return translator.popValues(L, stktop - 1);
         }
 
         #endregion
