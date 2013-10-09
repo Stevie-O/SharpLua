@@ -1,10 +1,11 @@
 using System;
 using SharpLua;
+using System.Text;
 namespace SharpLua.LASM
 {
     public class LASMDecompiler
     {
-        static void decompile(Chunk chunk)
+        void decompile(Chunk chunk)
         {
             if (chunk != file.Main)
             {
@@ -97,20 +98,26 @@ namespace SharpLua.LASM
             }
         }
 
-        static int indent = 0;
-        static string s = "";
-        static LuaFile file;
+        int indent = 0;
+        StringBuilder s = new StringBuilder();
+        LuaFile file;
 
-        static void write(string t)
+        LASMDecompiler(LuaFile file) { this.file = file; }
+
+        void write(string t)
         {
-            s = s + "    ".Repeat(indent) + t + "\r\n";
+            if (t == null) t = string.Empty;
+            s.EnsureCapacity(s.Capacity + 4 * indent + t.Length + 2);
+            for (int i=0; i<indent; i++)
+                s.Append("    ");
+            s.Append(t).Append("\r\n");
         }
 
         public static string Decompile(LuaFile file)
         {
-            LASMDecompiler.file = file;
-            decompile(file.Main);
-            return s;
+            LASMDecompiler decomp = new LASMDecompiler(file);
+            decomp.decompile(file.Main);
+            return decomp.s.ToString();
         }
     }
 }

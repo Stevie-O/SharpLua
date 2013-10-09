@@ -241,7 +241,8 @@ namespace SharpLua.LASM
             }
         }
 
-        public Instruction(int opcode, int num = 0)
+        public Instruction(int opcode) : this(opcode, 0) {}
+        public Instruction(int opcode, int num)
         {
             A = 0;
             B = 0;
@@ -255,7 +256,9 @@ namespace SharpLua.LASM
             Number = num;
             LineNumber = 0;
         }
-        public Instruction(string name, int num = 0)
+
+        public Instruction(string name) : this(name, 0) {}
+        public Instruction(string name, int num)
             : this((int)(LuaOpcode)Enum.Parse(typeof(LuaOpcode), name, true), num)
         {
         }

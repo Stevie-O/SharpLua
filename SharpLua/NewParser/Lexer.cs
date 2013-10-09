@@ -13,7 +13,12 @@ namespace SharpLua
         int ln = 1;
         int col = 1;
 
-        char peek(int n = 0)
+        char peek() 
+        {
+            return peek(0);
+        }
+
+        char peek(int n)
         {
             if (src.Length < p + n + 1)
                 return '\0';
