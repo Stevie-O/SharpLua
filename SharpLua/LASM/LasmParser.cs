@@ -404,11 +404,23 @@ namespace SharpLua.LASM
             {
                 // number
                 int x;
-                if (!int.TryParse(text.Trim(), out x))
+                if (!int_TryParse(text.Trim(), out x))
                     throw new Exception("Unable to read value '" + text + "'");
                 else
                     return x;
             }
+        }
+
+        static bool int_TryParse(string s, out int x)
+        {
+#if WindowsCE
+            x = default(int);
+            if (string.IsNullOrEmpty(s)) return false;
+            try { x = int.Parse(s); return true; }
+            catch (FormatException) { return false; }
+#else
+            return int.TryParse(s, out x);
+#endif
         }
 
         void readWhitespace()

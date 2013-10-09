@@ -21,7 +21,7 @@ namespace SharpLua
 	public partial class Lua
 	{
 		private static int os_pushresult (LuaState L, int i, CharPtr filename) {
-		  int en = errno();  /* calls to Lua API may change this value */
+		  object en = errno;  /* calls to Lua API may change this value */
 		  if (i != 0) {
 			lua_pushboolean(L, 1);
 			return 1;
@@ -29,7 +29,7 @@ namespace SharpLua
 		  else {
 			lua_pushnil(L);
 			lua_pushfstring(L, "%s: %s", filename, strerror(en));
-			lua_pushinteger(L, en);
+			lua_pushinteger(L, getinterror(en));
 			return 3;
 		  }
 		}
@@ -46,7 +46,18 @@ namespace SharpLua
             // original lua uses system(), which returns -1 on error
 			return -1;
 #else
-            string shell = Environment.GetEnvironmentVariable("COMSPEC");
+
+            string shell;
+            string formatted_args;
+
+#if WindowsCE
+            // (SMO) This was determined experimentally by mucking with a 
+            // Micros Workstation 5
+            shell = "\\windows\\cmd.exe";
+            exec_option = "/c ";
+            if (!File.Exists(shell)) shell = null;
+#else
+            shell = Environment.GetEnvironmentVariable("COMSPEC");
             if (shell == null)
             {
                 exec_option = "-c ";
@@ -56,7 +67,8 @@ namespace SharpLua
             {
                 exec_option = "/s /c";
             }
-                
+#endif
+
             if (arg == null)
                 return (shell == null) ? 0 : 1;
 
@@ -64,22 +76,28 @@ namespace SharpLua
             {
                 luaL_error(L, "os_execute: neither COMSPEC nor SHELL defined");
                 return -1;
+            
             }
-
             string cmdline = new string(arg.chars, arg.index, strlen(arg));
-            Debug.Print("os_execute('{0}')", cmdline);
+            //Debug.Print("os_execute('{0}')", cmdline);
 
-            System.Diagnostics.Process proc = new System.Diagnostics.Process();
-			proc.EnableRaisingEvents=false;
-            proc.StartInfo.UseShellExecute = false;
-            proc.StartInfo.FileName = shell;
-			proc.StartInfo.Arguments = string.Format(
+#if WindowsCE
+            formatted_args = string.Concat(exec_option, cmdline);
+#else
+            formatted_args = string.Format(
                             "{0}\"{1}\"", exec_option, cmdline
                             );
-            Debug.Print("\tArguments = '{0}'", proc.StartInfo.Arguments);
-			proc.Start();
-			proc.WaitForExit();
-			lua_pushinteger(L, proc.ExitCode);
+#endif
+
+            System.Diagnostics.Process proc = new System.Diagnostics.Process();
+            proc.EnableRaisingEvents = false;
+            proc.StartInfo.UseShellExecute = false;
+            proc.StartInfo.FileName = shell;
+            proc.StartInfo.Arguments = formatted_args;
+            //Debug.Print("\tArguments = '{0}'", proc.StartInfo.Arguments);
+            proc.Start();
+            proc.WaitForExit();
+            lua_pushinteger(L, proc.ExitCode);
             return 1;
 #endif
 		}
@@ -200,7 +218,7 @@ namespace SharpLua
 
 		private static int os_date (LuaState L) {
 		  CharPtr s = luaL_optstring(L, 1, "%c");
-          lua_Number? usetime = luaL_opt(L, nullable_checknumber, 2, null);
+          lua_Number? usetime = luaL_opt<lua_Number?>(L, nullable_checknumber, 2, null);
           DateTime stm;
 
 		  if (s[0] == '!') {  /* UTC? */
@@ -297,12 +315,10 @@ namespace SharpLua
 		private static int os_exit (LuaState L) {
 #if XBOX
 			luaL_error(L, "os_exit not supported on XBox360");
-#else
-#if SILVERLIGHT
+#elif SILVERLIGHT
             throw new SystemException();
 #else
-			Environment.Exit(EXIT_SUCCESS);
-#endif
+            exit(EXIT_SUCCESS);
 #endif
 			return 0;
 		}

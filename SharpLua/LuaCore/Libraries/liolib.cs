@@ -29,7 +29,7 @@ namespace SharpLua
 
 
         private static int pushresult (LuaState L, int i, CharPtr filename) {
-            int en = errno();  /* calls to Lua API may change this value */
+            object en = errno;  /* calls to Lua API may change this value */
             if (i != 0) {
                 lua_pushboolean(L, 1);
                 return 1;
@@ -40,14 +40,14 @@ namespace SharpLua
                     lua_pushfstring(L, "%s: %s", filename, strerror(en));
                 else
                     lua_pushfstring(L, "%s", strerror(en));
-                lua_pushinteger(L, en);
+                lua_pushinteger(L, getinterror(en));
                 return 3;
             }
         }
 
 
         private static void fileerror (LuaState L, int arg, CharPtr filename) {
-            lua_pushfstring(L, "%s: %s", filename, strerror(errno()));
+            lua_pushfstring(L, "%s: %s", filename, strerror(errno));
             luaL_argerror(L, arg, lua_tostring(L, -1));
         }
 
@@ -400,7 +400,7 @@ namespace SharpLua
             luaL_error(L, "file is already closed");
             sucess = read_line(L, f);
             if (ferror(f)!=0)
-                return luaL_error(L, "%s", strerror(errno()));
+                return luaL_error(L, "%s", strerror(errno));
             if (sucess != 0) return 1;
             else {  /* EOF */
                 if (lua_toboolean(L, lua_upvalueindex(2)) != 0) {  /* generator created file? */

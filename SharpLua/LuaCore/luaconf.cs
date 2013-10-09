@@ -972,24 +972,6 @@ namespace SharpLua
         public const int EXIT_SUCCESS = 0;
         public const int EXIT_FAILURE = 1;
 
-        public static int errno()
-        {
-            return -1;	// todo: fix this - mjf
-        }
-
-        public static CharPtr strerror(int error)
-        {
-            return String.Format("error #{0}", error); // todo: check how this works - mjf
-        }
-
-        public static CharPtr getenv(CharPtr envname)
-        {
-            // todo: fix this - mjf
-            //if (envname == "LUA_PATH)
-            //return "MyPath";
-            return System.Environment.GetEnvironmentVariable(envname.ToString());
-        }
-
         public class CharPtr
         {
             public char[] chars;
@@ -1338,8 +1320,9 @@ namespace SharpLua
                 if (!f.CanRead) return -1;
                 return f.ReadByte();
             }
-            catch (IOException)
+            catch (IOException ex)
             {
+                seterrno(ex);
                 return -1;
             }
         }
@@ -1361,9 +1344,13 @@ namespace SharpLua
         }
 
 #if XBOX || SILVERLIGHT
-		public static Stream stdout;
-		public static Stream stdin;
-		public static Stream stderr;
+		public static Stream stdout = Stream.Null;
+		public static Stream stdin = Stream.Null;
+		public static Stream stderr = Stream.Null;
+#elif WindowsCE
+        public static Stream stdout = new ConsoleStream(1);
+        public static Stream stdin = new ConsoleStream(0);
+        public static Stream stderr = new ConsoleStream(2);
 #else
         public static Stream stdout = Console.OpenStandardOutput();
         public static Stream stdin = Console.OpenStandardInput();
@@ -1418,8 +1405,9 @@ namespace SharpLua
                     ptr[i] = (char)bytes[i];
                 return result / size;
             }
-            catch
+            catch (Exception ex)
             {
+                seterrno(ex);
                 return 0;
             }
         }
@@ -1434,8 +1422,9 @@ namespace SharpLua
             {
                 stream.Write(bytes, 0, num_bytes);
             }
-            catch
+            catch (Exception ex)
             {
+                seterrno(ex);
                 return 0;
             }
             return num;
@@ -1490,8 +1479,9 @@ namespace SharpLua
                 str[index] = '\0';
                 return index > 0 ? str : null;
             }
-            catch (IOException)
+            catch (IOException ex)
             {
+                seterrno(ex);
                 str[index - 1] = '\0';
                 return null;
             }
@@ -1499,7 +1489,7 @@ namespace SharpLua
 
         public static double frexp(double x, out int expptr)
         {
-#if XBOX
+#if XBOX || WindowsCE
 			expptr = (int)(Math.Log(x) / Math.Log(2)) + 1;
 #else
             expptr = (int)Math.Log(x, 2) + 1;
@@ -1571,10 +1561,25 @@ namespace SharpLua
             return true;
        }
 
+        const int ERROR_FILE_NOT_FOUND = 2;
         public static Stream fopen(CharPtr filename, CharPtr mode)
         {
             string str = filename.ToString();
-            if (!FilenameLooksValid(filename)) return null;
+#if WindowsCE
+            if (!Path.IsPathRooted(str))
+            {
+                if (string.IsNullOrEmpty(FakeCurrentDirectory))
+                {
+                    seterrno(new Exception("FakeCurrentDirectory must be set to enable relative paths under CF"));
+                }
+                str = Path.Combine(FakeCurrentDirectory, str);
+            }
+#endif
+            if (!FilenameLooksValid(filename))
+            {
+                seterrno(ERROR_FILE_NOT_FOUND);
+                return null;
+            }
             FileMode filemode = FileMode.Open;
             FileAccess fileaccess = (FileAccess)0;
             for (int i = 0; mode[i] != '\0'; i++)
@@ -1588,7 +1593,10 @@ namespace SharpLua
                     case 'r':
                         fileaccess = fileaccess | FileAccess.Read;
                         if (!File.Exists(str))
+                        {
+                            seterrno(ERROR_FILE_NOT_FOUND);
                             return null;
+                        }
                         break;
 
                     case 'w':
@@ -1600,8 +1608,9 @@ namespace SharpLua
             {
                 return new FileStream(str, filemode, fileaccess);
             }
-            catch
+            catch (Exception ex)
             {
+                seterrno(ex);
                 return null;
             }
         }
@@ -1613,7 +1622,10 @@ namespace SharpLua
                 stream.Flush();
                 stream.Close();
             }
-            catch { }
+            catch (Exception ex) 
+            {
+                seterrno(ex);
+            }
 
             return fopen(filename, mode);
         }
@@ -1654,8 +1666,9 @@ namespace SharpLua
                 f.Seek(offset, (SeekOrigin)origin);
                 return 0;
             }
-            catch
+            catch (Exception ex)
             {
+                seterrno(ex);
                 return 1;
             }
         }

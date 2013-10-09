@@ -17,30 +17,65 @@ namespace SharpLua
 
         ExtractValue extractNetObject;
         ExtractValue extractNull;
-        Dictionary<long, ExtractValue> extractValues = new Dictionary<long, ExtractValue>();
+        Dictionary<Type, ExtractValue> extractValues = new Dictionary<Type, ExtractValue>(FastTypeComparer.Instance);
+
+        class FastTypeComparer : IEqualityComparer<Type>, IEqualityComparer<RuntimeTypeHandle>
+        {
+            public static readonly FastTypeComparer Instance = new FastTypeComparer();
+
+            public bool Equals(Type x, Type y)
+            {
+                if (x == null) return (y == null);
+                return x.Equals(y);
+            }
+
+            public int GetHashCode(Type obj)
+            {
+                if (obj == null) return 0;
+                return obj.GetHashCode();
+            }
+
+            public bool Equals(RuntimeTypeHandle x, RuntimeTypeHandle y)
+            {
+#if WindowsCE
+                return x.Equals(y);
+#else
+                return x.Value == y.Value;
+#endif
+            }
+
+            public int GetHashCode(RuntimeTypeHandle obj)
+            {
+#if WindowsCE
+                return obj.GetHashCode();
+#else
+                return (int)(long)obj.Value;
+#endif
+            }
+        }
 
         public CheckType(ObjectTranslator translator)
         {
             this.translator = translator;
 
-            extractValues.Add(typeof(object).TypeHandle.Value.ToInt64(), new ExtractValue(getAsObject));
-            extractValues.Add(typeof(sbyte).TypeHandle.Value.ToInt64(), new ExtractValue(getAsSbyte));
-            extractValues.Add(typeof(byte).TypeHandle.Value.ToInt64(), new ExtractValue(getAsByte));
-            extractValues.Add(typeof(short).TypeHandle.Value.ToInt64(), new ExtractValue(getAsShort));
-            extractValues.Add(typeof(ushort).TypeHandle.Value.ToInt64(), new ExtractValue(getAsUshort));
-            extractValues.Add(typeof(int).TypeHandle.Value.ToInt64(), new ExtractValue(getAsInt));
-            extractValues.Add(typeof(uint).TypeHandle.Value.ToInt64(), new ExtractValue(getAsUint));
-            extractValues.Add(typeof(long).TypeHandle.Value.ToInt64(), new ExtractValue(getAsLong));
-            extractValues.Add(typeof(ulong).TypeHandle.Value.ToInt64(), new ExtractValue(getAsUlong));
-            extractValues.Add(typeof(double).TypeHandle.Value.ToInt64(), new ExtractValue(getAsDouble));
-            extractValues.Add(typeof(char).TypeHandle.Value.ToInt64(), new ExtractValue(getAsChar));
-            extractValues.Add(typeof(float).TypeHandle.Value.ToInt64(), new ExtractValue(getAsFloat));
-            extractValues.Add(typeof(decimal).TypeHandle.Value.ToInt64(), new ExtractValue(getAsDecimal));
-            extractValues.Add(typeof(bool).TypeHandle.Value.ToInt64(), new ExtractValue(getAsBoolean));
-            extractValues.Add(typeof(string).TypeHandle.Value.ToInt64(), new ExtractValue(getAsString));
-            extractValues.Add(typeof(LuaFunction).TypeHandle.Value.ToInt64(), new ExtractValue(getAsFunction));
-            extractValues.Add(typeof(LuaTable).TypeHandle.Value.ToInt64(), new ExtractValue(getAsTable));
-            extractValues.Add(typeof(LuaUserData).TypeHandle.Value.ToInt64(), new ExtractValue(getAsUserdata));
+            extractValues.Add(typeof(object), new ExtractValue(getAsObject));
+            extractValues.Add(typeof(sbyte), new ExtractValue(getAsSbyte));
+            extractValues.Add(typeof(byte), new ExtractValue(getAsByte));
+            extractValues.Add(typeof(short), new ExtractValue(getAsShort));
+            extractValues.Add(typeof(ushort), new ExtractValue(getAsUshort));
+            extractValues.Add(typeof(int), new ExtractValue(getAsInt));
+            extractValues.Add(typeof(uint), new ExtractValue(getAsUint));
+            extractValues.Add(typeof(long), new ExtractValue(getAsLong));
+            extractValues.Add(typeof(ulong), new ExtractValue(getAsUlong));
+            extractValues.Add(typeof(double), new ExtractValue(getAsDouble));
+            extractValues.Add(typeof(char), new ExtractValue(getAsChar));
+            extractValues.Add(typeof(float), new ExtractValue(getAsFloat));
+            extractValues.Add(typeof(decimal), new ExtractValue(getAsDecimal));
+            extractValues.Add(typeof(bool), new ExtractValue(getAsBoolean));
+            extractValues.Add(typeof(string), new ExtractValue(getAsString));
+            extractValues.Add(typeof(LuaFunction), new ExtractValue(getAsFunction));
+            extractValues.Add(typeof(LuaTable), new ExtractValue(getAsTable));
+            extractValues.Add(typeof(LuaUserData), new ExtractValue(getAsUserdata));
 
             extractNull = new ExtractValue(getNull);
             extractNetObject = new ExtractValue(getAsNetObject);
@@ -58,12 +93,12 @@ namespace SharpLua
         {
             if (paramType.IsByRef) paramType = paramType.GetElementType();
 
-            long runtimeHandleValue = paramType.TypeHandle.Value.ToInt64();
+            Type runtimeHandleValue = paramType;
 
-            if (extractValues.ContainsKey(runtimeHandleValue))
-                return extractValues[runtimeHandleValue];
-            else
-                return extractNetObject;
+            ExtractValue ev;
+            if (!extractValues.TryGetValue(runtimeHandleValue, out ev))
+                ev = extractNetObject;
+            return ev;
         }
 
         /// <summary>
@@ -75,11 +110,13 @@ namespace SharpLua
         {
             Type t = Type.GetType(name, false);
             if (t != null) yield return t;
+#if !WindowsCE
             foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
             {
                 t = a.GetType(name, false);
                 if (t != null) yield return t;
             }
+#endif
         }
 
         /// <summary>
@@ -243,6 +280,12 @@ namespace SharpLua
 
         }
 
+#if WindowsCE
+        static readonly Type[] EmptyTypes = new Type[0];
+#else
+        static Type[] EmptyTypes { get { return Type.EmptyTypes; } }
+#endif
+
         /// <summary>
         /// Attempts to convert a Lua table (located on the stack of L at <paramref name="stackPos"/>) to a .NET object.
         /// </summary>
@@ -273,7 +316,7 @@ namespace SharpLua
             ctor = desiredType.GetConstructor(new Type[] { typeof(LuaTable) });
             if (ctor != null) { return new NetCtorFactory(ctor, this).ConstructFromLuaTable; }
 
-            ctor = desiredType.GetConstructor(Type.EmptyTypes);
+            ctor = desiredType.GetConstructor(EmptyTypes);
             if (ctor != null) { return new NetCtorFactory(ctor, this).ConstructAndInit; }
 
             return null;
@@ -291,7 +334,7 @@ namespace SharpLua
                 paramType = underlyingType;     // Silently convert nullable types to their non null requics
             }
 
-            long runtimeHandleValue = paramType.TypeHandle.Value.ToInt64();
+            Type runtimeHandleValue = paramType;
 
             if (paramType.Equals(typeof(object)))
                 return extractValues[runtimeHandleValue];
@@ -300,17 +343,17 @@ namespace SharpLua
             if (paramType.IsGenericParameter)
             {
                 if (luatype == LuaTypes.LUA_TBOOLEAN)
-                    return extractValues[typeof(bool).TypeHandle.Value.ToInt64()];
+                    return extractValues[typeof(bool)];
                 else if (luatype == LuaTypes.LUA_TSTRING)
-                    return extractValues[typeof(string).TypeHandle.Value.ToInt64()];
+                    return extractValues[typeof(string)];
                 else if (luatype == LuaTypes.LUA_TTABLE)
-                    return extractValues[typeof(LuaTable).TypeHandle.Value.ToInt64()];
+                    return extractValues[typeof(LuaTable)];
                 else if (luatype == LuaTypes.LUA_TUSERDATA)
-                    return extractValues[typeof(object).TypeHandle.Value.ToInt64()];
+                    return extractValues[typeof(object)];
                 else if (luatype == LuaTypes.LUA_TFUNCTION)
-                    return extractValues[typeof(LuaFunction).TypeHandle.Value.ToInt64()];
+                    return extractValues[typeof(LuaFunction)];
                 else if (luatype == LuaTypes.LUA_TNUMBER)
-                    return extractValues[typeof(double).TypeHandle.Value.ToInt64()];
+                    return extractValues[typeof(double)];
                 //else // suppress CS0642
                 ;//an unsupported type was encountered
             }
@@ -362,6 +405,7 @@ namespace SharpLua
                 if (luatype == LuaTypes.LUA_TFUNCTION)
                     return extractValues[runtimeHandleValue];
             }
+#if !WindowsCE
             else if (typeof(Delegate).IsAssignableFrom(paramType) && luatype == LuaTypes.LUA_TFUNCTION)
             {
                 return new ExtractValue(new DelegateGenerator(translator, paramType).extractGenerated);
@@ -370,6 +414,7 @@ namespace SharpLua
             {
                 return new ExtractValue(new ClassGenerator(translator, paramType).extractGenerated);
             }
+#endif
             else if ((paramType.IsInterface || paramType.IsClass) && luatype == LuaTypes.LUA_TNIL)
             {
                 // kevinh - allow nil to be silently converted to null - extractNetObject will return null when the item ain't found

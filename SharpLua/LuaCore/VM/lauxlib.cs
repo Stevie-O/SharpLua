@@ -694,7 +694,7 @@ namespace SharpLua
 
         private static int errfile(LuaState L, CharPtr what, int fnameindex)
         {
-            CharPtr serr = strerror(errno());
+            CharPtr serr = strerror(errno);
             CharPtr filename = lua_tostring(L, fnameindex) + 1;
             lua_pushfstring(L, "cannot %s %s: %s", what, filename, serr);
             lua_remove(L, fnameindex);

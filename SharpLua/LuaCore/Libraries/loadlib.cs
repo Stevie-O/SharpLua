@@ -42,7 +42,11 @@ namespace SharpLua
 
         public static void setprogdir(LuaState L)
         {
+#if WindowsCE
+            CharPtr buff = Path.GetDirectoryName(typeof(LuaState).Assembly.GetName().CodeBase);
+#else
             CharPtr buff = Directory.GetCurrentDirectory();
+#endif
             luaL_gsub(L, lua_tostring(L, -1), LUA_EXECDIR, buff);
             lua_remove(L, -2);  /* remove original string */
         }
@@ -720,7 +724,6 @@ namespace SharpLua
             null 
         };
 
-
         public static int luaopen_package(LuaState L)
         {
             int i;
@@ -747,13 +750,13 @@ namespace SharpLua
                 lua_rawseti(L, -2, i + 1);
             }
             lua_setfield(L, -2, "loaders");  /* put it in field `loaders' */
-            string lpath = Environment.GetEnvironmentVariable(LUA_PATH);
+            string lpath = getenv(LUA_PATH);
             if (!StringExt.IsNullOrWhiteSpace(lpath))
                 lpath = lpath + ";" + LUA_PATH_DEFAULT;
             else
                 lpath = LUA_PATH_DEFAULT;
             setpath(L, "path", LUA_PATH, lpath);  /* set field `path' */
-            string cpath = Environment.GetEnvironmentVariable(LUA_CPATH);
+            string cpath = getenv(LUA_CPATH);
             if (!StringExt.IsNullOrWhiteSpace(cpath))
                 cpath = cpath + ";" + LUA_CPATH_DEFAULT;
             else

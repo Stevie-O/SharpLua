@@ -8,6 +8,10 @@ namespace SharpLua
     using System.Collections.Generic;
     using System.Runtime.InteropServices;
 
+#if WindowsCE
+    using IReflect = System.Type;
+#endif
+
     /*
      * Functions used in the metatables of userdata representing
      * CLR objects
@@ -122,7 +126,7 @@ namespace SharpLua
                     strrep = obj.ToString();
                 }
 
-                Debug.Print("{0}: ({1}) {2}", i, typestr, strrep);
+                //Debug.Print("{0}: ({1}) {2}", i, typestr, strrep);
             }
         }
 
@@ -510,11 +514,13 @@ namespace SharpLua
                     }
                 }
             }
+#if !WindowsCE
             catch (SEHException)
             {
                 // If we are seeing a C++ exception - this must actually be for Lua's private use.  Let it handle it
                 throw;
             }
+#endif
             catch (Exception e)
             {
                 ThrowError(luaState, e);
@@ -740,7 +746,6 @@ namespace SharpLua
             return Math.Ceiling(x) == x;
         }
 
-
         internal Array TableToArray(object luaParamValue, Type paramArrayType)
         {
             Array paramArray;
@@ -762,7 +767,7 @@ namespace SharpLua
                         if (o != null && o.GetType() == typeof(double) && IsInteger((double)o))
                             o = Convert.ToInt32((double)o);
                     }
-                    paramArray.SetValue(Convert.ChangeType(o, paramArrayType), paramArrayIndex);
+                    paramArray.SetValue(Convert.ChangeType(o, paramArrayType, null), paramArrayIndex);
                     paramArrayIndex++;
                 }
             }
@@ -793,13 +798,13 @@ namespace SharpLua
             List<MethodArgs> argTypes = new List<MethodArgs>();
             foreach (ParameterInfo currentNetParam in paramInfo)
             {
-                if (!currentNetParam.IsIn && currentNetParam.IsOut)  // Skips out params
+                if ((currentNetParam.Attributes & (ParameterAttributes.In | ParameterAttributes.Out)) == ParameterAttributes.Out)  // Skips out params
                 {
                     outList.Add(paramList.Add(null));
                 }
                 else if (currentLuaParam > nLuaParams) // Adds optional parameters
                 {
-                    if (currentNetParam.IsOptional)
+                    if ( (currentNetParam.Attributes & ParameterAttributes.Optional) != 0 )
                     {
                         paramList.Add(currentNetParam.DefaultValue);
                     }
@@ -839,7 +844,7 @@ namespace SharpLua
 
                     currentLuaParam++;
                 }
-                else if (currentNetParam.IsOptional)
+                else if ( (currentNetParam.Attributes & ParameterAttributes.Optional) != 0 )
                 {
                     paramList.Add(currentNetParam.DefaultValue);
                 }

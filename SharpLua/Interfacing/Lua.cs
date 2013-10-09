@@ -619,10 +619,12 @@ namespace SharpLua
          * Gets a table global variable as an object implementing
          * the interfaceType interface
          */
+#if !WindowsCE
         public object GetTable(Type interfaceType, string fullPath)
         {
             return CodeGeneration.Instance.GetClassInstance(interfaceType, GetTable(fullPath));
         }
+#endif
         /*
          * Gets a function global variable
          */
@@ -635,10 +637,12 @@ namespace SharpLua
          * Gets a function global variable as a delegate of
          * type delegateType
          */
+#if !WindowsCE
         public Delegate GetFunction(Type delegateType, string fullPath)
         {
             return CodeGeneration.Instance.GetDelegate(delegateType, GetFunction(fullPath));
         }
+#endif
         /*
          * Calls the object as a function with the provided arguments,
          * returning the function's returned values inside an array
@@ -816,10 +820,12 @@ namespace SharpLua
             LuaDLL.lua_settop(luaState, oldTop);
         }
 
+#if !WindowsCE
         public LuaFunction RegisterFunction(string path, Delegate d)
         {
             return RegisterFunction(path, d.Target, d.Method);
         }
+#endif
 
         /*
          * Registers an object's method as a Lua function (global or table field)

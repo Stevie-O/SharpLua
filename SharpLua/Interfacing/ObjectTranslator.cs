@@ -6,6 +6,11 @@ namespace SharpLua
     using System.Reflection;
     using System.Collections.Generic;
     using System.Diagnostics;
+
+#if WindowsCE
+    using IReflect = System.Type;
+#endif
+
     /*
      * Passes objects from the CLR to Lua and vice-versa
      *
@@ -198,7 +203,7 @@ namespace SharpLua
 
                 try
                 {
-                    assembly = Assembly.LoadWithPartialName(assemblyName);
+                    assembly = Assembly.Load(assemblyName);
                 }
                 catch (BadImageFormatException)
                 {
@@ -207,7 +212,11 @@ namespace SharpLua
 
                 if (assembly == null)
                 {
+#if WindowsCE
+                    assembly = Assembly.LoadFrom(assemblyName);
+#else
                     assembly = Assembly.Load(AssemblyName.GetAssemblyName(assemblyName));
+#endif
                 }
 
             }
@@ -221,6 +230,11 @@ namespace SharpLua
 
         internal Type FindType(string className)
         {
+            Type t = Type.GetType(className, false);
+            if (t != null) return t;
+#if WindowsCE
+            // TODO: allow host to pre-provide a  list of assemblies to be consulted
+#else
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 Type klass = assembly.GetType(className, false, true);
@@ -229,6 +243,7 @@ namespace SharpLua
                     return klass;
                 }
             }
+#endif
             return null;
         }
 
@@ -253,6 +268,9 @@ namespace SharpLua
          */
         private int registerTable(SharpLua.Lua.LuaState luaState)
         {
+#if WindowsCE
+            throwError(luaState, "cannot make_object() under Windows CE");
+#else
             if (LuaDLL.lua_type(luaState, 1) == LuaTypes.LUA_TTABLE)
             {
                 LuaTable luaTable = getTable(luaState, 1);
@@ -288,6 +306,7 @@ namespace SharpLua
                     throwError(luaState, "register_table: superclass name can not be null");
             }
             else throwError(luaState, "register_table: first arg is not a table");
+#endif
             return 0;
         }
         /*
@@ -449,7 +468,7 @@ namespace SharpLua
                     string err = null;
                     try
                     {
-                        res = Enum.Parse(t, sflags);
+                        res = Enum.Parse(t, sflags, false);
                     }
                     catch (ArgumentException e)
                     {
@@ -824,6 +843,7 @@ namespace SharpLua
         // else if(o is ILuaGeneratedType)
         static bool IsILua(object o)
         {
+#if !WindowsCE
             if (o is ILuaGeneratedType)
             {
                 // Make sure we are _really_ ILuaGenerated
@@ -832,6 +852,7 @@ namespace SharpLua
                 return (typ.GetInterface("ILuaGeneratedType") != null);
             }
             else
+#endif
                 return false;
         }
 
@@ -866,10 +887,12 @@ namespace SharpLua
                 bool b = (bool)o;
                 LuaDLL.lua_pushboolean(luaState, b);
             }
+#if !WindowsCE
             else if (IsILua(o))
             {
                 (((ILuaGeneratedType)o).__luaInterface_getLuaTable()).push(luaState);
             }
+#endif
             else if (o is LuaTable)
             {
                 ((LuaTable)o).push(luaState);

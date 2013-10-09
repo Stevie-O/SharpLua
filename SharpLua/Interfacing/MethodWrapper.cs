@@ -7,6 +7,10 @@ namespace SharpLua
     using System.Collections.Generic;
     using System.Diagnostics;
 
+#if WindowsCE
+    using IReflect = System.Type;
+#endif
+
     /*
      * Cached method
      */
@@ -421,6 +425,9 @@ namespace SharpLua
          */
         public Delegate Add(LuaFunction function)
         {
+#if WindowsCE
+            throw new NotSupportedException();
+#else
             //CP: Fix by Ben Bryant for event handling with one parameter
             //link: http://luaforge.net/forum/message.php?msg_id=9266
             Delegate handlerDelegate = CodeGeneration.Instance.GetDelegate(eventInfo.EventHandlerType, function);
@@ -428,6 +435,7 @@ namespace SharpLua
             pendingEvents.Add(handlerDelegate, this);
 
             return handlerDelegate;
+#endif
 
 
             //MethodInfo mi = eventInfo.EventHandlerType.GetMethod("Invoke");

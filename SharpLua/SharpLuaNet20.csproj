@@ -51,7 +51,9 @@
   <ItemGroup>
     <Compile Include="Decompiler\Decompiler.cs" />
     <Compile Include="Interfacing\IReturnListHandler.cs" />
+    <Compile Include="Support\errno_h.cs" />
     <Compile Include="Support\NumberReader.cs" />
+    <Compile Include="Support\stdlib_h.cs" />
     <Compile Include="Support\strftime.cs" />
     <Content Include="Defines.txt" />
     <Compile Include="Interfacing\CheckType.cs" />

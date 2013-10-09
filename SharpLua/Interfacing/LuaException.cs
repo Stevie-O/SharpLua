@@ -20,8 +20,12 @@ namespace SharpLua
             : base(message, innerException)
         { }
 
+#if WindowsCE
+        public virtual string Source { get { return null; } }
+#else
         protected LuaException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         { }
+#endif
     }
 }

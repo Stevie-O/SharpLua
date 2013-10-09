@@ -1,0 +1,174 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="2.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{85EE2E82-B643-4AAE-BBD2-0B3EB0DE842E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SharpLua</RootNamespace>
+    <AssemblyName>SharpLua</AssemblyName>
+    <ProjectTypeGuids>{4D628B5B-2FBC-4AA6-8C16-197242AEB884};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <PlatformFamilyName>WindowsCE</PlatformFamilyName>
+    <PlatformID>E2BECB1F-8C8C-41ba-B736-9BE7D946A398</PlatformID>
+    <OSVersion>5.0</OSVersion>
+    <DeployDirSuffix>SharpLuaCF20</DeployDirSuffix>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <NativePlatformName>Windows CE</NativePlatformName>
+    <FormFactorID>
+    </FormFactorID>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\bin\Debug\CF20</OutputPath>
+    <DefineConstants>TRACE;DEBUG;IMPLICIT_VARARG;LUA_CORE;_WIN32;LUA_COMPAT_VARARG;LUA_COMPAT_MOD;LUA_COMPAT_GFIND;CATCH_EXCEPTIONS;NET20;WindowsCE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <FileAlignment>512</FileAlignment>
+    <WarningLevel>4</WarningLevel>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\Release\CF20</OutputPath>
+    <DefineConstants>TRACE;LUA_CORE;_WIN32;LUA_COMPAT_VARARG;LUA_COMPAT_MOD;LUA_COMPAT_GFIND;CATCH_EXCEPTIONS;NET20;$(PlatformFamilyName)</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <FileAlignment>512</FileAlignment>
+    <WarningLevel>4</WarningLevel>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CFSupport.cs" />
+    <Compile Include="Decompiler\Decompiler.cs" />
+    <Compile Include="Interfacing\IReturnListHandler.cs" />
+    <Compile Include="NewParser\StringExt.cs" />
+    <Compile Include="Support\errno_h.cs" />
+    <Compile Include="Support\LuaCFSupport.cs" />
+    <Compile Include="Support\NumberReader.cs" />
+    <Compile Include="Support\stdlib_h.cs" />
+    <Compile Include="Support\strftime.cs" />
+    <Content Include="Defines.txt" />
+    <Compile Include="Interfacing\CheckType.cs" />
+    <None Include="Interfacing\GenerateEventAssembly.cs" />
+    <Compile Include="Interfacing\Lua.cs" />
+    <Compile Include="Interfacing\LuaBase.cs" />
+    <Compile Include="Interfacing\LuaDLL.cs" />
+    <Compile Include="Interfacing\LuaException.cs" />
+    <Compile Include="Interfacing\LuaFunction.cs" />
+    <Compile Include="Interfacing\LuaGlobalAttribute.cs" />
+    <Compile Include="Interfacing\LuaHideAttribute.cs" />
+    <None Include="..\TODO.txt">
+      <Link>TODO.txt</Link>
+    </None>
+    <None Include="Decompiler\disassembler example.lua" />
+    <Compile Include="Interfacing\LuaRegistrationHelper.cs" />
+    <Compile Include="Interfacing\LuaScriptException.cs" />
+    <Compile Include="Interfacing\LuaTable.cs" />
+    <Compile Include="Interfacing\LuaUserData.cs" />
+    <Compile Include="Interfacing\Metatables.cs" />
+    <Compile Include="Interfacing\MethodWrapper.cs" />
+    <Compile Include="Interfacing\LuaModuleAttribute.cs" />
+    <Compile Include="Interfacing\LuaFunctionAttribute.cs" />
+    <Compile Include="Interfacing\ObjectTranslator.cs" />
+    <Compile Include="Interfacing\ProxyType.cs" />
+    <None Include="LASM\Dumper.cs_" />
+    <None Include="lua.cs" />
+    <None Include="luac.cs" />
+    <Compile Include="Interfacing\ScriptStrings.cs" />
+    <Compile Include="LASM\bit.cs" />
+    <Compile Include="LASM\Chunk.cs" />
+    <Compile Include="LASM\Disassembler.cs" />
+    <Compile Include="LASM\Enums.cs" />
+    <Compile Include="LASM\Instruction.cs" />
+    <Compile Include="LASM\LASMDecompiler.cs" />
+    <Compile Include="LASM\LasmParser.cs" />
+    <Compile Include="LASM\LuaFile.cs" />
+    <Compile Include="LASM\PlatformConfig.cs" />
+    <Compile Include="LASM\Verifier.cs" />
+    <Compile Include="LuaCore\Libraries\lbitlib.cs" />
+    <Compile Include="LuaCore\RawByteEncoding.cs" />
+    <Compile Include="LuaCore\VM\lapi.cs" />
+    <Compile Include="LuaCore\VM\lauxlib.cs" />
+    <Compile Include="LuaCore\Libraries\lbaselib.cs" />
+    <Compile Include="LuaCore\VM\lcode.cs" />
+    <Compile Include="LuaCore\Libraries\ldblib.cs" />
+    <Compile Include="LuaCore\VM\ldebug.cs" />
+    <Compile Include="LuaCore\VM\ldo.cs" />
+    <Compile Include="LuaCore\VM\ldump.cs" />
+    <Compile Include="LuaCore\VM\lfunc.cs" />
+    <Compile Include="LuaCore\VM\lgc.cs" />
+    <Compile Include="LuaCore\linit.cs" />
+    <Compile Include="LuaCore\Libraries\liolib.cs" />
+    <Compile Include="LuaCore\Parser\llex.cs" />
+    <Compile Include="LuaCore\llimits.cs" />
+    <Compile Include="LuaCore\Libraries\lmathlib.cs" />
+    <Compile Include="LuaCore\VM\lmem.cs" />
+    <Compile Include="LuaCore\Libraries\loadlib.cs" />
+    <Compile Include="LuaCore\lobject.cs" />
+    <Compile Include="LuaCore\VM\lopcodes.cs" />
+    <Compile Include="LuaCore\Libraries\loslib.cs" />
+    <Compile Include="LuaCore\Parser\lparser.cs" />
+    <Compile Include="LuaCore\lstate.cs" />
+    <Compile Include="LuaCore\lstring.cs" />
+    <Compile Include="LuaCore\Libraries\lstrlib.cs" />
+    <Compile Include="LuaCore\ltable.cs" />
+    <Compile Include="LuaCore\Libraries\ltablib.cs" />
+    <Compile Include="LuaCore\ltm.cs" />
+    <Compile Include="LuaCore\lua.cs" />
+    <Compile Include="LuaCore\luaconf.cs" />
+    <Compile Include="LuaCore\Libraries\lualib.cs" />
+    <Compile Include="LuaCore\VM\lundump.cs" />
+    <Compile Include="LuaCore\VM\lvm.cs" />
+    <Compile Include="LuaCore\lzio.cs" />
+    <Compile Include="LuaCore\print.cs" />
+    <Compile Include="LuaRuntime.cs" />
+    <Compile Include="Net20Support.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="LuaCore\printf.cs" />
+    <None Include="Resources\BuildResources.bat" />
+    <None Include="Resources\clrlib.slua" />
+    <EmbeddedResource Include="Resources\clrlib.sluac" />
+    <None Include="Resources\extlib.slua" />
+    <EmbeddedResource Include="Resources\extlib.sluac" />
+    <None Include="Resources\luanet.slua" />
+    <EmbeddedResource Include="Resources\luanet.sluac" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="LASM\LASM.txt" />
+    <Content Include="LASM\Readme.txt" />
+    <Content Include="NewParser\Compiler\AstToCodeMap.txt" />
+    <Content Include="NewParser\XmlDocumentation\Format.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CompactFramework.CSharp.targets" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}">
+        <HostingProcess disable="1" />
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -24,7 +24,7 @@ namespace SharpLua.Interactive
         static void die(string message, int exitCode)
         {
             Console.Error.WriteLine("Error: {0}", message);
-            Environment.Exit(exitCode);
+            Lua.exit(exitCode);
         }
 
         enum InteractiveOption
@@ -34,11 +34,20 @@ namespace SharpLua.Interactive
             No,
         }
 
+#if WindowsCE
+        static string[] argv;
+#endif
         /// <summary>
         /// A REPL (Read, Eval, Print, Loop function) for #Lua
         /// </summary>
-        public static void Main()
+        public static void Main(string[] partial_argv)
         {
+#if WindowsCE
+            argv = new string[partial_argv.Length + 1];
+            argv[0] = System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase;
+            partial_argv.CopyTo(argv, 1);
+#endif
+
             if (Debugger.IsAttached)
             {
                 // if a debugger is attached, ONLY catch LuaException
@@ -68,6 +77,15 @@ namespace SharpLua.Interactive
             }
         }
 
+        static string[] GetCommandLineArgs()
+        {
+#if WindowsCE
+            return (string[]) argv.Clone();
+#else
+            return Environment.GetCommandLineArgs();
+#endif
+        }
+
         static void RealMain()
         {
             // TODO: Better arg parsing/checking, make it more like the C lua
@@ -75,8 +93,6 @@ namespace SharpLua.Interactive
             InteractiveOption GoInteractive = InteractiveOption.Auto;
 
             // Create global variables
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
 
             //Stopwatch sw = new Stopwatch();
             //sw.Start();
@@ -106,7 +122,10 @@ namespace SharpLua.Interactive
             Prompt = "> ";
             
             // This gets the real, 100%, full command line, including argv[0]
-            string[] args = Environment.GetCommandLineArgs();
+            string[] args = GetCommandLineArgs();
+#if WindowsCE
+            Lua.FakeCurrentDirectory = Path.GetDirectoryName(args[0]); // default 'fake current directory' to the one where the executable resides
+#endif
             bool did_e = false;
             int argi;
             for (argi = 1; argi < args.Length; argi++)
@@ -159,7 +178,7 @@ namespace SharpLua.Interactive
                         break;
                     case 'v':
                         LuaRuntime.PrintBanner();
-                        Environment.Exit(0);
+                        Lua.exit(0);
                         break;
                     default:
                         die("Undefined option: " + arg);
@@ -179,9 +198,18 @@ namespace SharpLua.Interactive
                 t["n"] = args.Length - argi;
                 */
                 if (File.Exists(args[argi]))
-                    LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(args[argi]));
+                {
+                    string script_dir = Path.GetDirectoryName(Path.GetFullPath(args[argi]));
+#if WindowsCE
+                    if (!string.IsNullOrEmpty(script_dir))
+                        Lua.FakeCurrentDirectory = script_dir;
+#endif
+                    LuaRuntime.SetVariable("_WORKDIR", script_dir);
+                }
+#if !WindowsCE
                 else
                     LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath));
+#endif
                 LuaRuntime.RunFile(args[argi], args, argi);
             }
 
@@ -191,7 +219,7 @@ namespace SharpLua.Interactive
             {
                 if (!did_e)
                     LuaRuntime.PrintBanner();
-                LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(typeof(Program).Assembly.Location));
+                LuaRuntime.SetVariable("_WORKDIR", Path.GetDirectoryName(typeof(Program).Assembly.GetName().CodeBase));
                 while (true)
                 {
                     Console.Write(Prompt);
@@ -226,6 +254,7 @@ namespace SharpLua.Interactive
                                 Console.WriteLine();
                             }
                         }
+#if !WindowsCE
                         catch (LuaSourceException ex)
                         {
                             for (int i = 1; i < ex.Column; i++)
@@ -241,6 +270,7 @@ namespace SharpLua.Interactive
                             Console.WriteLine("^");
                             Console.WriteLine(ex.GenerateMessage("<stdin>"));
                         }
+#endif
                         catch (Exception error)
                         {
                             object dbg = LuaRuntime.GetVariable("DEBUG");

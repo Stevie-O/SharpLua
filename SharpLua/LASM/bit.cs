@@ -81,6 +81,19 @@ namespace SharpLua.LASM
             public double mantissa = 0;
         }
 
+        static 
+#if WindowsCE
+            unsafe
+#endif
+            long DoubleToInt64Bits(double value)
+        {
+#if WindowsCE
+            return *(((long*) &value));
+#else
+            return BitConverter.DoubleToInt64Bits(value);
+#endif        
+        }
+
         /// <summary>
         /// math.frexp implementation in C#
         /// </summary>
@@ -89,7 +102,7 @@ namespace SharpLua.LASM
         public static FRexpResult frexp(double value)
         {
             FRexpResult result = new FRexpResult();
-            long bits = BitConverter.DoubleToInt64Bits(value);
+            long bits = DoubleToInt64Bits(value);
             double realMant = 1;
 
             // Test for NaN, infinity, and zero.

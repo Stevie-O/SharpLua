@@ -75,15 +75,23 @@ namespace SharpLua
             Type type = typeof(T);
             if (!type.IsEnum) throw new ArgumentException("The type must be an enumeration!");
 
+            lua.NewTable(type.Name);
+#if WindowsCE
+            foreach (FieldInfo enumMember in type.GetFields())
+            {
+                if (enumMember.IsStatic && enumMember.IsLiteral && enumMember.FieldType == type)
+                    lua[enumMember.Name] = enumMember.GetValue(null);
+            }
+#else
             string[] names = Enum.GetNames(type);
             T[] values = (T[])Enum.GetValues(type);
 
-            lua.NewTable(type.Name);
             for (int i = 0; i < names.Length; i++)
             {
                 string path = type.Name + "." + names[i];
                 lua[path] = values[i];
             }
+#endif
         }
         #endregion
     }

@@ -136,7 +136,6 @@ namespace SharpLua
             L.errorJmp = null;
         }
 
-
         public static void luaD_throw(LuaState L, int errcode)
         {
             if (L.errorJmp != null)
@@ -155,12 +154,10 @@ namespace SharpLua
                 }
 #if XBOX
                 throw new ApplicationException();
-#else
-#if SILVERLIGHT
+#elif SILVERLIGHT
                 throw new SystemException();
 #else
-                Environment.Exit(EXIT_FAILURE);
-#endif
+                exit(EXIT_FAILURE);
 #endif
 
             }

@@ -984,11 +984,11 @@ namespace SharpLua
             public CharPtr lua_Reader(LuaState L, object ud, out uint sz)
             {
                 CharPtr ret = lua_ReaderImpl(L, ud, out sz);
-                Debug.Print("PeekableLuaReader::lua_Reader() returning sz = {0}, buffer = {1}",
-                            sz,
-                            (ret == null) ? "null" :
-                            string.Concat("'", ret.ToStringDebug(), "'")
-                            );
+                //Debug.Print("PeekableLuaReader::lua_Reader() returning sz = {0}, buffer = {1}",
+                //            sz,
+                //            (ret == null) ? "null" :
+                //            string.Concat("'", ret.ToStringDebug(), "'")
+                //            );
                 return ret;
             }
 
@@ -1046,6 +1046,7 @@ namespace SharpLua
             }
         }
 
+#if OVERRIDE_LOAD
         /// <summary>
         /// Performs SharpLua-specific preprocessing magic for lua_load()
         /// </summary>
@@ -1097,7 +1098,7 @@ namespace SharpLua
             data = cplr;
 
         }
-
+#endif
 
         public static int lua_load(LuaState L, lua_Reader reader, object data,
                                    CharPtr chunkname)
@@ -1107,7 +1108,7 @@ namespace SharpLua
             lua_lock(L);
             if (chunkname == null) chunkname = "?";
 
-#if OVERRIDE_LOAD || true
+#if OVERRIDE_LOAD
             //#if false
             // SharpLua_OverrideLoad(L, ref reader, ref data);
 #endif
@@ -1120,7 +1121,6 @@ namespace SharpLua
                 if (f.f != null)
                 {
                     f.f.Close();
-                    f.f.Dispose();
                 }
             }
             return status;

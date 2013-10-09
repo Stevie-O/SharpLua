@@ -57,7 +57,12 @@ namespace SharpLua
 
 		public static object LoadMem(LoadState S, Type t)
 		{
+#if WindowsCE
+            // under CE, sizeof(char) is 2, not 1!
+            int size = (t == typeof(char)) ? 1 : Marshal.SizeOf(t);
+#else
 			int size = Marshal.SizeOf(t);
+#endif
 			CharPtr str = new char[size];
 			LoadBlock(S, str, size);
 			byte[] bytes = new byte[str.chars.Length];
