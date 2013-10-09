@@ -248,6 +248,7 @@ namespace SharpLua
             }
         }
 
+#if ENABLE_TABLESCOPE
         static int gettablescope(LuaState L, TValue ra, TValue rb,
                    InstructionPtr pc, LClosure cl, StkId pbase)
         {
@@ -310,7 +311,7 @@ namespace SharpLua
             }
             return 0;
         }
-
+#endif
 
         private static int call_binTM(LuaState L, TValue p1, TValue p2,
                                       StkId res, TMS event_)
@@ -712,8 +713,10 @@ namespace SharpLua
                             lua_assert(ttisstring(rb));
 
                             /* PATCH - TABLESCOPE */
+#if ENABLE_TABLESCOPE
                             if (gettablescope(L, ra, rb, pc, cl, L.base_) == 1)
                                 continue;
+#endif
 
                             //Protect(
                             L.savedpc = InstructionPtr.Assign(pc);
