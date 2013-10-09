@@ -69,7 +69,7 @@ namespace SharpLua
             int i, n = lua_gettop(L);
             b_uint r = 0;
             for (i = 1; i <= n; i++)
-                r |= luaL_checkinteger(L, i);
+                r |= (uint)luaL_checkinteger(L, i);
             lua_pushnumber(L, trim(r));
             return 1;
         }
