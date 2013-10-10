@@ -524,9 +524,17 @@ namespace SharpLua
             funcstate.f.is_vararg = VARARG_ISVARARG;  /* main func. is always vararg */
             luaX_next(lexstate);  /* read first token */
 #if !WindowsCE
+            System.Globalization.CultureInfo oldCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
             System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+            try {
 #endif
             chunk(lexstate);
+#if !WindowsCE
+            }
+            finally {
+                System.Threading.Thread.CurrentThread.CurrentCulture = oldCulture;
+            }
+#endif
             check(lexstate, (int)RESERVED.TK_EOS);
             close_func(lexstate);
             lua_assert(funcstate.prev == null);
