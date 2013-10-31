@@ -1566,14 +1566,7 @@ namespace SharpLua
         {
             string str = filename.ToString();
 #if WindowsCE
-            if (!Path.IsPathRooted(str))
-            {
-                if (string.IsNullOrEmpty(FakeCurrentDirectory))
-                {
-                    seterrno(new Exception("FakeCurrentDirectory must be set to enable relative paths under CF"));
-                }
-                str = Path.Combine(FakeCurrentDirectory, str);
-            }
+            str = GetWinCePath(str);
 #endif
             if (!FilenameLooksValid(filename))
             {
@@ -1606,6 +1599,7 @@ namespace SharpLua
                 }
             try
             {
+                Console.Error.WriteLine("OPENING FILE: [{0}] WITH MODE: [{1}] AND ACCESS: [{2}]", str, filemode, fileaccess);
                 return new FileStream(str, filemode, fileaccess);
             }
             catch (Exception ex)

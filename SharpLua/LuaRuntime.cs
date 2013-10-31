@@ -54,6 +54,9 @@ namespace SharpLua
         /// </remarks>
         public static string FindFullPath(string spath)
         {
+#if WindowsCE
+            spath = Lua.GetWinCePath(spath);
+#endif
             if (File.Exists(spath))
                 return spath;
             if (File.Exists(spath + ".lua")) // lua

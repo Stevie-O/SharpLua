@@ -126,6 +126,29 @@ namespace SharpLua
                 throw new NotSupportedException();
             }
         }
+
+        /// <summary>
+        /// Gets the effective path under Windows CE
+        /// </summary>
+        /// <param name="path">The absolute or relative path name.</param>
+        /// <returns>A path name suitable for working with under Windows CE</returns>
+        /// <remarks>
+        /// Windows CE does not have the notion of a current directory(!).  All operations that involve
+        /// a path must use an absolute path.
+        /// </remarks>
+        public static string GetWinCePath(string path)
+        {
+            if (!Path.IsPathRooted(path))
+            {
+                if (string.IsNullOrEmpty(FakeCurrentDirectory))
+                {
+                    seterrno(new Exception("FakeCurrentDirectory must be set to enable relative paths under CF"));
+                }
+                path = Path.Combine(FakeCurrentDirectory, path);
+            }
+            return path;
+        }
 #endif
+
     }
 }

@@ -107,7 +107,10 @@ namespace SharpLua
 		  CharPtr filename = luaL_checkstring(L, 1);
 		  int result = 1;
           string s_filename = filename.ToString();
-          try { 
+#if WindowsCE
+          s_filename = GetWinCePath(s_filename);
+#endif
+            try { 
               if (!File.Exists(s_filename)) { result = 0; }
               else File.Delete(s_filename);
           } catch {result = 0;}
@@ -116,12 +119,19 @@ namespace SharpLua
 
 
 		private static int os_rename (LuaState L) {
-			CharPtr fromname = luaL_checkstring(L, 1);
+		  CharPtr fromname = luaL_checkstring(L, 1);
 		  CharPtr toname = luaL_checkstring(L, 2);
 		  int result;
-		  try
+          string s_fromname = fromname.ToString();
+          string s_toname = toname.ToString();
+#if WindowsCE
+          s_fromname = GetWinCePath(s_fromname);
+          s_toname = GetWinCePath(s_toname);
+#endif
+          
+            try
 		  {
-			  File.Move(fromname.ToString(), toname.ToString());
+			  File.Move(s_fromname, s_toname);
 			  result = 1;
 		  }
 		  catch
