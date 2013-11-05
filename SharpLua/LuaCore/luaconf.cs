@@ -485,8 +485,16 @@ namespace SharpLua
         @@ LUAI_MAXCCALLS is the maximum depth for nested C calls (short) and
         @* syntactical nested non-terminals in a program.
         */
+#if WindowsCE
+        public const int LUAI_MAXCCALLS = 50;
+#else
         public const int LUAI_MAXCCALLS = 150;
+#endif
+        /* Have a separate constant for maximum syntactical expression nesting; it 
+         * requires less stack space than a full Lua-to-C transition
+         */
 
+        public const int LUAI_MAXSYNNEST = 150;
 
         /*
         @@ LUAI_MAXVARS is the maximum number of local variables per function

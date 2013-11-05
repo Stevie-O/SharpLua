@@ -397,7 +397,7 @@ namespace SharpLua
 
         private static void enterlevel(LexState ls)
         {
-            if (++ls.L.nCcalls > LUAI_MAXCCALLS)
+            if (++ls.L.nCcalls > LUAI_MAXSYNNEST)
                 luaX_lexerror(ls, "chunk has too many syntax levels", 0);
         }
 
