@@ -68,8 +68,9 @@ namespace SharpLua
 		  stringtable tb;
 		  if (l+1 > MAX_SIZET /GetUnmanagedSize(typeof(char)))
 		    luaM_toobig(L);
-		  ts = new TString(new char[l+1]);
-		  AddTotalBytes(L, (int)(l + 1) * GetUnmanagedSize(typeof(char)) + GetUnmanagedSize(typeof(TString)));
+          char[] tstringData = luaM_newvector<char>(L, (int)(l + 1));
+		  ts = new TString(tstringData);
+		  AddTotalBytes(L, /*(int)(l + 1) * GetUnmanagedSize(typeof(char)) + */ GetUnmanagedSize(typeof(TString)));
 		  ts.tsv.len = l;
 		  ts.tsv.hash = h;
 		  ts.tsv.marked = luaC_white(G(L));

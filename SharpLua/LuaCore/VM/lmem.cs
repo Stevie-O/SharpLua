@@ -145,7 +145,10 @@ namespace SharpLua
 			int old_size = (old_block == null) ? 0 : old_block.Length;
 			int osize = old_size * unmanaged_size;
 			int nsize = new_size * unmanaged_size;
-			T[] new_block = new T[new_size];
+            T[] new_block;
+            try { new_block = new T[new_size]; }
+            catch (OutOfMemoryException) { luaD_throw(L, LUA_ERRMEM); return null; }
+            // TODO: Use Array.Copy here, maybe?
 			for (int i = 0; i < Math.Min(old_size, new_size); i++)
 				new_block[i] = old_block[i];
 			for (int i = old_size; i < new_size; i++)
