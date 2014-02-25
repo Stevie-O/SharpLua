@@ -25,16 +25,14 @@ namespace SharpLua
         public readonly Dictionary<int, object> objects = new Dictionary<int, object>();
         // object to object #
         public readonly Dictionary<object, int> objectsBackMap = new Dictionary<object, int>();
-        internal LuaInterface interpreter;
         private MetaFunctions metaFunctions;
         private SharpLua.Lua.lua_CFunction registerTableFunction, unregisterTableFunction, getMethodSigFunction,
             getConstructorSigFunction, importTypeFunction, loadAssemblyFunction, ctypeFunction, enumFromIntFunction;
 
         internal EventHandlerContainer pendingEvents = new EventHandlerContainer();
 
-        public ObjectTranslator(LuaInterface interpreter, SharpLua.Lua.LuaState luaState)
+        public ObjectTranslator(LuaInterface __ignored__, SharpLua.Lua.LuaState luaState)
         {
-            this.interpreter = interpreter;
             typeChecker = new CheckType(this);
             metaFunctions = new MetaFunctions(this);
 
@@ -674,7 +672,7 @@ namespace SharpLua
         /*
          * Gets an object from the Lua stack according to its Lua type.
          */
-        internal object getObject(SharpLua.Lua.LuaState luaState, int index)
+        public object getObject(SharpLua.Lua.LuaState luaState, int index)
         {
             LuaTypes type = LuaDLL.lua_type(luaState, index);
             switch (type)
@@ -717,7 +715,7 @@ namespace SharpLua
         internal LuaTable getTable(SharpLua.Lua.LuaState luaState, int index)
         {
             LuaDLL.lua_pushvalue(luaState, index);
-            return new LuaTable(LuaDLL.lua_ref(luaState, 1), interpreter);
+            return new LuaTable(LuaDLL.lua_ref(luaState, 1), luaState.Interface);
         }
         /*
          * Gets the userdata in the index positon of the Lua stack.
@@ -725,7 +723,7 @@ namespace SharpLua
         internal LuaUserData getUserData(SharpLua.Lua.LuaState luaState, int index)
         {
             LuaDLL.lua_pushvalue(luaState, index);
-            return new LuaUserData(LuaDLL.lua_ref(luaState, 1), interpreter);
+            return new LuaUserData(LuaDLL.lua_ref(luaState, 1), luaState.Interface);
         }
         /*
          * Gets the function in the index positon of the Lua stack.
@@ -733,7 +731,7 @@ namespace SharpLua
         internal LuaFunction getFunction(SharpLua.Lua.LuaState luaState, int index)
         {
             LuaDLL.lua_pushvalue(luaState, index);
-            return new LuaFunction(LuaDLL.lua_ref(luaState, 1), interpreter);
+            return new LuaFunction(LuaDLL.lua_ref(luaState, 1), luaState.Interface);
         }
         /*
          * Gets the CLR object in the index positon of the Lua stack. Returns

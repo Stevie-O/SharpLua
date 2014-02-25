@@ -126,9 +126,9 @@ namespace SharpLua
         /// </summary>
         /// <returns>num of things on stack</returns>
         /// <param name="e">null for no pending exception</param>
-        int SetPendingException(Exception e)
+        int SetPendingException(Lua.LuaState luaState, Exception e)
         {
-            return _Translator.interpreter.SetPendingException(e);
+            return luaState.Interface.SetPendingException(e);
         }
 
         private static bool IsInteger(double x)
@@ -153,7 +153,7 @@ namespace SharpLua
 
             bool isStatic = (_BindingType & BindingFlags.Static) == BindingFlags.Static;
 
-            SetPendingException(null);
+            SetPendingException(luaState, null);
 
             if (methodToCall == null) // Method from name
             {
@@ -213,13 +213,13 @@ namespace SharpLua
                         catch (TargetInvocationException e)
                         {
                             // Failure of method invocation
-                            return SetPendingException(e.GetBaseException());
+                            return SetPendingException(luaState, e.GetBaseException());
                         }
                         catch (Exception e)
                         {
                             if (_Members.Length == 1) // Is the method overloaded?
                                 // No, throw error
-                                return SetPendingException(e);
+                                return SetPendingException(luaState, e);
                         }
                     }
                 }
@@ -334,11 +334,11 @@ namespace SharpLua
                 }
                 catch (TargetInvocationException e)
                 {
-                    return SetPendingException(e.GetBaseException());
+                    return SetPendingException(luaState, e.GetBaseException());
                 }
                 catch (Exception e)
                 {
-                    return SetPendingException(e);
+                    return SetPendingException(luaState, e);
                 }
             }
 

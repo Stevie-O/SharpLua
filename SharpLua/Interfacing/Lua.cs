@@ -35,6 +35,15 @@ namespace SharpLua
 
         ObjectTranslator translator;
 
+        /// <summary>
+        /// Gets/sets the object used to translate between Lua values and .NET values.
+        /// </summary>
+        /// <remarks>
+        /// A Lua value is anything that may be stored in a Lua variable.
+        /// A .NET value is anything that has copy-by-value semantics -- basically, all value types, and all object *references* (not the objects themselves).
+        /// </remarks>
+        public ObjectTranslator Translator { get { return translator; } set { translator = value; } }
+
         SharpLua.Lua.lua_CFunction panicCallback, lockCallback, unlockCallback;
         SharpLua.Lua.lua_CFunction tracebackFunction;
         // lockCallback, unlockCallback; used by debug code commented out for now
