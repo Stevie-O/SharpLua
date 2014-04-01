@@ -322,6 +322,40 @@ namespace SharpLua
             return null;
         }
 
+        class EnumExtractor
+        {
+            public readonly Type Type;
+            public EnumExtractor(Type type) { Type = type; }
+            public object ExtractNumber(SharpLua.Lua.LuaState luaState, int stackPos) 
+            {
+                return Enum.ToObject(Type, Lua.lua_tointeger(luaState, stackPos));
+            }
+            public object ExtractString(SharpLua.Lua.LuaState luaState, int stackPos)
+            {
+                return Enum.Parse(Type, LuaDLL.lua_tostring(luaState, stackPos), false);
+            }
+        }
+
+        /// <summary>
+        /// Gets the pre-defined extractor for the specified data type, or null if one is not defined.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        ExtractValue getPredefinedExtractor(Type t) 
+        {
+            ExtractValue result;
+            extractValues.TryGetValue(t, out result);
+            return result;
+        }
+        
+        /// <summary>
+        /// Attempts to find a method for converting the value on at <paramref name="stackpos"/> on the Lua stack to a .NET object of type <paramref name="paramType"/>.
+        /// If no such conversion can be found, the method should return null.
+        /// </summary>
+        /// <param name="luaState">The Lua state where the value is stored.</param>
+        /// <param name="stackPos">The stack position of the value.</param>
+        /// <param name="paramType">The desired .NET data type.</param>
+        /// <returns></returns>
         internal ExtractValue checkType(SharpLua.Lua.LuaState luaState, int stackPos, Type paramType)
         {
             LuaTypes luatype = LuaDLL.lua_type(luaState, stackPos);
@@ -363,19 +397,38 @@ namespace SharpLua
                 return extractNull;
             }
 
-            if (LuaDLL.lua_isnumber(luaState, stackPos))
-                return extractValues[runtimeHandleValue];
+            if (paramType.IsEnum) 
+            {
+                // Special handling for enums.
+
+                // First, if they passed an actual .NET enum instance, use it as-is.
+                object obj = translator.getNetObject(luaState, stackPos);
+                if (obj != null && paramType.IsAssignableFrom(obj.GetType()))
+                    return extractNetObject;
+                // If they passed in a number, convert that to an enum value
+                if (LuaDLL.lua_isnumber(luaState, stackPos))
+                    return new EnumExtractor(paramType).ExtractNumber;
+                // If they passed in a string, and that string is one of the values defined for that enum, use that
+                if (LuaDLL.lua_isstring(luaState, stackPos)
+                    && Enum.IsDefined(paramType, LuaDLL.lua_tostring(luaState, stackPos))
+                    )
+                    return new EnumExtractor(paramType).ExtractString;
+                return null;
+            }
+
+            if (LuaDLL.lua_isnumber(luaState, stackPos)) 
+                return getPredefinedExtractor(runtimeHandleValue);
 
             if (paramType == typeof(bool))
             {
                 if (LuaDLL.lua_isboolean(luaState, stackPos))
-                    return extractValues[runtimeHandleValue];
+                    return getPredefinedExtractor(runtimeHandleValue);
             }
             else if (paramType == typeof(string))
             {
                 if (LuaDLL.lua_isstring(luaState, stackPos))
-                    return extractValues[runtimeHandleValue];
-                else if (luatype == LuaTypes.LUA_TNIL)
+                    return getPredefinedExtractor(runtimeHandleValue);
+                else if (luatype == LuaTypes.LUA_TNIL) // (SMO) is this possible? Shouldn't the lua_isnil check above prevent us from getting here?
                     return extractNetObject; // kevinh - silently convert nil to a null string pointer
             }
             else if (paramType == typeof(char))
@@ -385,7 +438,7 @@ namespace SharpLua
                 {
                     string str = LuaDLL.lua_tostring(luaState, stackPos);
                     if (str.Length == 1) // must be char length (Length == 1)
-                        return extractValues[runtimeHandleValue];
+                        return getPredefinedExtractor(runtimeHandleValue);
                 }
                 else if (luatype == LuaTypes.LUA_TNIL)
                     return extractNetObject;
@@ -393,17 +446,17 @@ namespace SharpLua
             else if (paramType == typeof(LuaTable))
             {
                 if (luatype == LuaTypes.LUA_TTABLE)
-                    return extractValues[runtimeHandleValue];
+                    return getPredefinedExtractor(runtimeHandleValue);
             }
             else if (paramType == typeof(LuaUserData))
             {
                 if (luatype == LuaTypes.LUA_TUSERDATA)
-                    return extractValues[runtimeHandleValue];
+                    return getPredefinedExtractor(runtimeHandleValue);
             }
             else if (paramType == typeof(LuaFunction))
             {
                 if (luatype == LuaTypes.LUA_TFUNCTION)
-                    return extractValues[runtimeHandleValue];
+                    return getPredefinedExtractor(runtimeHandleValue);
             }
 #if !WindowsCE
             else if (typeof(Delegate).IsAssignableFrom(paramType) && luatype == LuaTypes.LUA_TFUNCTION)
