@@ -31,6 +31,21 @@ namespace SharpLua
 
         internal EventHandlerContainer pendingEvents = new EventHandlerContainer();
 
+#if WindowsCE
+        /// <summary>
+        /// List of assemblies to search when searching for a type by name
+        /// </summary>
+        /// <remarks>
+        /// Under the full framework, we simply use AppDomain.CurrentDomain.GetAssemblies().
+        /// The Compact Framework, however, does not provide this method, nor any other means to 
+        /// get a list of all assemblies loaded into the current AppDomain.
+        /// Therefore, under the Compact Framework, integrators must populate this property in order for
+        /// various operations to perform usefully.
+        /// </remarks>
+        public static List<Assembly> SearchAssemblies = new List<Assembly>();
+
+#endif
+
         public ObjectTranslator(LuaInterface __ignored__, SharpLua.Lua.LuaState luaState)
         {
             typeChecker = new CheckType(this);
@@ -226,22 +241,22 @@ namespace SharpLua
             return 0;
         }
 
-        internal Type FindType(string className)
+        internal Type FindType(string className) { return FindType(className, null); }
+
+        internal Type FindType(string className, Type desiredType)
         {
             Type t = Type.GetType(className, false);
             if (t != null) return t;
-#if WindowsCE
-            // TODO: allow host to pre-provide a  list of assemblies to be consulted
-#else
+
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
-                Type klass = assembly.GetType(className, false, true);
+                Type klass = assembly.GetType(className, true);
                 if (klass != null)
                 {
-                    return klass;
+                    if (desiredType == null || desiredType.IsAssignableFrom(klass))
+                        return klass;
                 }
             }
-#endif
             return null;
         }
 
@@ -498,7 +513,7 @@ namespace SharpLua
         internal void pushFunction(SharpLua.Lua.LuaState luaState, SharpLua.Lua.lua_CFunction func)
         {
             //Console.WriteLine("function push");
-            if (true) 
+            if (true)
                 // 11/16/12 - Fix function pushing (Dirk Weltz metatable problem)
                 // SharpLua.InterfacingTests still works
                 // This allows metatables to have CLR defined functions
@@ -851,7 +866,7 @@ namespace SharpLua
             }
             else
 #endif
-                return false;
+            return false;
         }
 
         /*

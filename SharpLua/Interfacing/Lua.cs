@@ -829,7 +829,20 @@ namespace SharpLua
             LuaDLL.lua_settop(luaState, oldTop);
         }
 
-#if !WindowsCE
+#if WindowsCE
+
+        public LuaFunction RegisterFunction(string path, Delegate d)
+        {
+            if (d == null) throw new ArgumentNullException("d");
+            // Under CE, we can't get to the underlying object or method
+            // But we don't actually have to -- we can use 'd' itself and the delegate's Invoke method.
+
+            return RegisterFunction(path,
+                (object)d,
+                d.GetType().GetMethod("Invoke")
+                );
+        }
+#else
         public LuaFunction RegisterFunction(string path, Delegate d)
         {
             return RegisterFunction(path, d.Target, d.Method);
@@ -855,7 +868,6 @@ namespace SharpLua
 
             return f;
         }
-
 
         /*
          * Compares the two values referenced by ref1 and ref2 for equality

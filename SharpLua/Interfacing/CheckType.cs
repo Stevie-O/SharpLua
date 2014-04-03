@@ -102,37 +102,14 @@ namespace SharpLua
         }
 
         /// <summary>
-        /// Generator that yields a list of all Types we could find that match the given name.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        static IEnumerable<Type> FindTypes(string name)
-        {
-            Type t = Type.GetType(name, false);
-            if (t != null) yield return t;
-#if !WindowsCE
-            foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                t = a.GetType(name, false);
-                if (t != null) yield return t;
-            }
-#endif
-        }
-
-        /// <summary>
         /// Tries to find a type with the specified name, that are derived from the specified base type
         /// </summary>
         /// <param name="name"></param>
         /// <param name="desiredBaseType"></param>
         /// <returns></returns>
-        static Type FindCompatibleType(string name, Type desiredBaseType)
+        Type FindCompatibleType(string name, Type desiredBaseType)
         {
-            foreach (Type t in FindTypes(name))
-            {
-                if (!desiredBaseType.IsAssignableFrom(t)) continue;
-                return t;
-            }
-            return null;
+            return translator.FindType(name, desiredBaseType);
         }
 
         class NetCtorFactory

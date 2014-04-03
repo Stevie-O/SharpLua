@@ -149,6 +149,16 @@ namespace SharpLua
             return sb.AppendFormat(null, format, args);
         }
 
+        /// <summary>
+        /// Surrogate for AppDomain.GetAssemblies()
+        /// </summary>
+        /// <param name="unused"></param>
+        /// <returns></returns>
+        public static List<Assembly> GetAssemblies(this AppDomain unused)
+        {
+            return ObjectTranslator.SearchAssemblies;
+        }
+
         public static MemberInfo[] GetMember(this Type t, string memberName, MemberTypes memberTypes, BindingFlags bindingFlags)
         {
             MemberInfo[] members = t.GetMember(memberName, bindingFlags);
