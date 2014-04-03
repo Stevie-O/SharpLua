@@ -140,11 +140,15 @@ namespace SharpLua
         {
             if (!Path.IsPathRooted(path))
             {
-                if (string.IsNullOrEmpty(FakeCurrentDirectory))
+                string fakeCurrentDir = FakeCurrentDirectory;
+                if (string.IsNullOrEmpty(fakeCurrentDir))
                 {
                     seterrno(new Exception("FakeCurrentDirectory must be set to enable relative paths under CF"));
                 }
-                path = Path.Combine(FakeCurrentDirectory, path);
+                else
+                {
+                    path = Path.Combine(fakeCurrentDir, path);
+                }
             }
             return path;
         }
