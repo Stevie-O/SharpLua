@@ -45,7 +45,7 @@ namespace SharpLua
 #if WindowsCE
             CharPtr buff = Path.GetDirectoryName(typeof(LuaState).Assembly.GetName().CodeBase);
 #else
-            CharPtr buff = Directory.GetCurrentDirectory();
+            CharPtr buff = AppDomain.CurrentDomain.BaseDirectory;
 #endif
             luaL_gsub(L, lua_tostring(L, -1), LUA_EXECDIR, buff);
             lua_remove(L, -2);  /* remove original string */
