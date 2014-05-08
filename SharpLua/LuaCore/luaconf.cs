@@ -1607,7 +1607,7 @@ namespace SharpLua
                 }
             try
             {
-                Console.Error.WriteLine("OPENING FILE: [{0}] WITH MODE: [{1}] AND ACCESS: [{2}]", str, filemode, fileaccess);
+                // Console.Error.WriteLine("OPENING FILE: [{0}] WITH MODE: [{1}] AND ACCESS: [{2}]", str, filemode, fileaccess);
                 return new FileStream(str, filemode, fileaccess);
             }
             catch (Exception ex)

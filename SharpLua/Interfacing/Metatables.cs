@@ -650,6 +650,11 @@ namespace SharpLua
         {
             IReflect klass;
             object obj = translator.getRawNetObject(luaState, 1);
+#if WindowsCE
+            // In the Compact Framework, the IReflect interface does not exist.
+            // This prevents IReflect magic from working correctly between Type and ProxyType.
+            if (obj is ProxyType) { obj = ((ProxyType)obj).UnderlyingSystemType; }
+#endif
             if (obj == null || !(obj is IReflect))
             {
                 translator.throwError(luaState, "trying to index an invalid type reference");
@@ -682,6 +687,11 @@ namespace SharpLua
         {
             IReflect target;
             object obj = translator.getRawNetObject(luaState, 1);
+#if WindowsCE
+            // In the Compact Framework, the IReflect interface does not exist.
+            // This prevents IReflect magic from working correctly between Type and ProxyType.
+            if (obj is ProxyType) { obj = ((ProxyType)obj).UnderlyingSystemType; }
+#endif
             if (obj == null || !(obj is IReflect))
             {
                 translator.throwError(luaState, "trying to index an invalid type reference");
@@ -701,9 +711,14 @@ namespace SharpLua
             MethodCache validConstructor = new MethodCache();
             IReflect klass;
             object obj = translator.getRawNetObject(luaState, 1);
+#if WindowsCE
+            // In the Compact Framework, the IReflect interface does not exist.
+            // This prevents IReflect magic from working correctly between Type and ProxyType.
+            if (obj is ProxyType) { obj = ((ProxyType)obj).UnderlyingSystemType; }
+#endif
             if (obj == null || !(obj is IReflect))
             {
-                translator.throwError(luaState, "trying to call constructor on an invalid type reference");
+                translator.throwError(luaState, string.Format("trying to call constructor on an invalid type reference ({0})", (obj == null) ? "null" : obj.GetType().FullName));
                 LuaDLL.lua_pushnil(luaState);
                 return 1;
             }
