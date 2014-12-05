@@ -23,7 +23,7 @@ namespace SharpLua
         {
             StringBuilder sb = new StringBuilder(256);
             int x = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 0, win32error, 0, sb, sb.Capacity, IntPtr.Zero);
-            if (x > 0) return sb.ToString();
+            if (x > 0) return sb.ToString(0, x);
             return null;
         }
 

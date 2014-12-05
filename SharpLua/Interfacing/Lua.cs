@@ -298,12 +298,12 @@ namespace SharpLua
         /// <returns>Array of objects as returned by the chunk.</returns>
         public object[] DoString(string chunk, string chunkName, params object[] args)
         {
-            return DoBufferCommon<string>(LuaDLL.luaL_loadbuffer, chunk, chunk.Length, chunkName, args, -1, this);
+            return DoBufferCommon<string>(LuaDLL.luaL_loadbuffer, LoadFuncFlags.None, chunk, chunk.Length, chunkName, args, -1, this);
         }
 
         public object[] DoString(string chunk, string chunkName, object[] args, IReturnListHandler retxlat)
         {
-            return DoBufferCommon<string>(LuaDLL.luaL_loadbuffer, chunk, chunk.Length, chunkName, args, -1, retxlat);
+            return DoBufferCommon<string>(LuaDLL.luaL_loadbuffer, LoadFuncFlags.None, chunk, chunk.Length, chunkName, args, -1, retxlat);
         }
 
         public object[] DoString(char[] chunk)
@@ -320,7 +320,7 @@ namespace SharpLua
         /// <returns>Array of objects as returned by the chunk.</returns>
         public object[] DoString(char[] chunk, string chunkName, params object[] args)
         {
-            return DoBufferCommon<char[]>(LuaDLL.luaL_loadbuffer, chunk, chunk.Length, chunkName, args, -1);
+            return DoBufferCommon<char[]>(LuaDLL.luaL_loadbuffer, LoadFuncFlags.None, chunk, chunk.Length, chunkName, args, -1);
         }
 
         private int traceback(SharpLua.Lua.LuaState luaState)
@@ -331,6 +331,16 @@ namespace SharpLua
             LuaDLL.lua_pushnumber(luaState, 2);
             LuaDLL.lua_call(luaState, 2, 1);
             return 1;
+        }
+
+        [Flags]
+        enum LoadFuncFlags
+        {
+            None = 0,
+            /// <summary>
+            /// Error messages end up on the top of the stack, above the arguments, instead of below them. (luaL_loadfile)
+            /// </summary>
+            ErrorOnTop = (1<<0),
         }
 
         /// <summary>
@@ -346,7 +356,7 @@ namespace SharpLua
         public object[] DoFile(string fileName, object[] args, int arg0_idx)
         {
             if (fileName == "-") fileName = null;
-            return DoBufferCommon<string>(luaL_loadfile_shim, null, 0, fileName, args, arg0_idx);
+            return DoBufferCommon<string>(luaL_loadfile_shim, LoadFuncFlags.ErrorOnTop, null, 0, fileName, args, arg0_idx);
         }
 
         static int luaL_loadfile_shim(Lua.LuaState L, string unused1, int unused2, string filename) 
@@ -354,7 +364,7 @@ namespace SharpLua
             return LuaDLL.luaL_loadfile(L, filename);
         }
 
-        public int PushChunkArguments(object[] args, int arg0_idx)
+        int PushChunkArguments(object[] args, int arg0_idx)
         {
             int pushed_args = 0;
             if (args != null)
@@ -384,20 +394,22 @@ namespace SharpLua
             return pushed_args;
         }
 
-        object[] DoBufferCommon<T>(LoadBufferFunc<T> loadfunc, T chunk, int chunksize, string chunkName, object[] args, int arg0_idx)
+        object[] DoBufferCommon<T>(LoadBufferFunc<T> loadfunc, LoadFuncFlags flags, T chunk, int chunksize, string chunkName, object[] args, int arg0_idx)
         {
-            return DoBufferCommon<T>(loadfunc, chunk, chunksize, chunkName, args, arg0_idx, this);
+            return DoBufferCommon<T>(loadfunc, flags, chunk, chunksize, chunkName, args, arg0_idx, this);
         }
         
 
-        object[] DoBufferCommon<T>(LoadBufferFunc<T> loadfunc, T chunk, int chunksize, string chunkName, object[] args, int arg0_idx, IReturnListHandler xlate)
+        object[] DoBufferCommon<T>(LoadBufferFunc<T> loadfunc, LoadFuncFlags flags, T chunk, int chunksize, string chunkName, object[] args, int arg0_idx, IReturnListHandler xlate)
         {
             if (xlate == null) xlate = this;
             int oldTop = LuaDLL.lua_gettop(luaState);
 
             int pushed_args = PushChunkArguments(args, arg0_idx);
 
-            if (loadfunc(luaState, chunk, chunksize, chunkName) == 0)
+            int loadfunc_result = loadfunc(luaState, chunk, chunksize, chunkName);
+
+            if (loadfunc_result == 0)
             {
                 if (pushed_args > 0)
                 {
@@ -429,7 +441,17 @@ namespace SharpLua
             else
             {
                 if (pushed_args > 0)
+                {
+                    if ((flags & LoadFuncFlags.ErrorOnTop) != 0)
+                    {
+                        // Move the top element over the first pushed arg
+                        LuaDLL.lua_replace(luaState, -(pushed_args+1));
+                        // Don't pop that space!
+                        pushed_args--;
+                    }
+
                     LuaDLL.lua_pop(luaState, pushed_args);
+                }
 
                 //string s = Lua.lua_tostring(luaState, -1);
                 //if (s.EndsWith("error #-1"))
