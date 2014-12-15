@@ -250,7 +250,7 @@ namespace SharpLua
 
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
-                Type klass = assembly.GetType(className, true);
+                Type klass = assembly.GetType(className, false);
                 if (klass != null)
                 {
                     if (desiredType == null || desiredType.IsAssignableFrom(klass))
