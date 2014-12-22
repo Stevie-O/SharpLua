@@ -1265,8 +1265,11 @@ namespace SharpLua
             while (dst[dst_index] != '\0')
                 dst_index++;
             int src_index = 0;
-            while ((src[src_index] != '\0') && (count-- > 0))
-                dst[dst_index++] = src[src_index++];
+            while (count-- > 0)
+            {
+                char ch = dst[dst_index++] = src[src_index++];
+                if (ch == '\0') break;
+            }
             return dst;
         }
 
