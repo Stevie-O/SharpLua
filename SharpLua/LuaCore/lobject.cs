@@ -955,8 +955,8 @@ namespace SharpLua
                     strcpy(out_, "[string \"");
                     if (source[len] != '\0')
                     {  /* must truncate? */
-                        strncat(out_, source, (int)len);
-                        strcat(out_, "...");
+                        strncat(out_, source, (int)len); out_ += (int)len;
+                        strcpy(out_, "...");
                     }
                     else
                         strcat(out_, source);
