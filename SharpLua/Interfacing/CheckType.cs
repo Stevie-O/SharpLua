@@ -16,6 +16,7 @@ namespace SharpLua
         private ObjectTranslator translator;
 
         ExtractValue extractNetObject;
+        ExtractValue extractTypeObject;
         ExtractValue extractNull;
         Dictionary<Type, ExtractValue> extractValues = new Dictionary<Type, ExtractValue>(FastTypeComparer.Instance);
 
@@ -79,6 +80,7 @@ namespace SharpLua
 
             extractNull = new ExtractValue(getNull);
             extractNetObject = new ExtractValue(getAsNetObject);
+            extractTypeObject = new ExtractValue(unwrapProxyType);
         }
 
         /*
@@ -469,8 +471,16 @@ namespace SharpLua
             else
             {
                 object obj = translator.getNetObject(luaState, stackPos);
-                if (obj != null && paramType.IsAssignableFrom(obj.GetType()))
-                    return extractNetObject;
+                if (obj != null)
+                {
+                    if (paramType.IsAssignableFrom(obj.GetType()))
+                        return extractNetObject;
+                    
+                    // System.Type is wrapped in a ProxyType before being passed along;
+                    // work properly if the method wants Type object as a parameter
+                    if (paramType == typeof(Type) && obj is ProxyType)
+                        return extractTypeObject;
+                }
             }
 
             return null;
@@ -608,6 +618,15 @@ namespace SharpLua
             object obj = translator.getObject(luaState, stackPos);
             return obj;
         }
+
+        public object unwrapProxyType(SharpLua.Lua.LuaState luaState, int stackPos)
+        {
+            ProxyType pt = getAsNetObject(luaState, stackPos) as ProxyType;
+            if (pt == null) return null;
+            return pt.UnderlyingSystemType;
+           
+        }
+
         public object getAsNetObject(SharpLua.Lua.LuaState luaState, int stackPos)
         {
             object obj = translator.getNetObject(luaState, stackPos);
