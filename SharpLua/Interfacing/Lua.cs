@@ -177,6 +177,7 @@ namespace SharpLua
         /// <exception cref="LuaScriptException">Thrown if the script caused an exception</exception>
         void ThrowExceptionFromError(int oldTop)
         {
+            Exception innerException = null;
             string msg = "";
             if (Lua.lua_isstring(luaState, -1) == 1)
                 msg = Lua.lua_tostring(luaState, -1);
@@ -191,6 +192,7 @@ namespace SharpLua
             else
             {
                 object err = translator.getObject(luaState, -1);
+                innerException = err as Exception;
                 LuaDLL.lua_settop(luaState, oldTop);
 
                 // A pre-wrapped exception - just rethrow it (stack trace of InnerException will be preserved)
@@ -204,7 +206,7 @@ namespace SharpLua
                 else
                     msg = err.ToString();
             }
-            throw new LuaException(msg);
+            throw new LuaException(msg, innerException);
         }
 
 
