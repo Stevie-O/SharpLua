@@ -313,6 +313,28 @@ namespace SharpLua
             {
                 return Enum.Parse(Type, LuaDLL.lua_tostring(luaState, stackPos), false);
             }
+            /// <summary>
+            /// Does this look like an Enum?
+            /// </summary>
+            /// <param name="t">The target Enum type</param>
+            /// <param name="s">The target Enum value</param>
+            /// <returns></returns>
+            public static bool LooksLikeEnumValue(Type t, SharpLua.Lua.LuaState luaState, int stackPos)
+            {
+                if (!LuaDLL.lua_isstring(luaState, stackPos)) return false;
+                string s = Lua.lua_tostring(luaState, stackPos);
+                if (Enum.IsDefined(t, s)) return true;
+                if (t.IsDefined(typeof(FlagsAttribute), false))
+                {
+                    try
+                    {
+                        Enum.Parse(t, s);
+                        return true;
+                    }
+                    catch { }
+                }
+                return false;
+            }
         }
 
         /// <summary>
@@ -388,9 +410,7 @@ namespace SharpLua
                 if (LuaDLL.lua_isnumber(luaState, stackPos))
                     return new EnumExtractor(paramType).ExtractNumber;
                 // If they passed in a string, and that string is one of the values defined for that enum, use that
-                if (LuaDLL.lua_isstring(luaState, stackPos)
-                    && Enum.IsDefined(paramType, LuaDLL.lua_tostring(luaState, stackPos))
-                    )
+                if (EnumExtractor.LooksLikeEnumValue(paramType, luaState, stackPos))
                     return new EnumExtractor(paramType).ExtractString;
                 return null;
             }
