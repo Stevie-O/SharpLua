@@ -97,7 +97,7 @@ namespace SharpLua
             if (obj != null)
             {
                 //translator.push(luaState, obj.ToString() + ": " + obj.GetHashCode());
-		translator.push(luaState, obj.ToString());
+                translator.push(luaState, obj.ToString());
             }
             else LuaDLL.lua_pushnil(luaState);
             return 1;
@@ -128,6 +128,37 @@ namespace SharpLua
 
                 //Debug.Print("{0}: ({1}) {2}", i, typestr, strrep);
             }
+        }
+
+        /// <summary>
+        /// Attempts to locate an indexer method (this[itemm])
+        /// </summary>
+        /// <param name="luaState">Lua state object with the method parameters on the stack</param>
+        /// <param name="objType">TYpe of the object we're indexing</param>
+        /// <param name="methodName">The name of the indexer method (get_Item or set_Item)</param>
+        /// <returns></returns>
+        MethodBase resolveIndexerMethod(SharpLua.Lua.LuaState luaState, Type objType, string methodName)
+        {
+            MethodCache dummy = new MethodCache();
+            MethodBase cached = checkMemberCache(memberCache, objType, methodName) as MethodBase;
+            if (cached != null)
+            {
+                if (matchParameters(luaState, cached, ref dummy))
+                    return cached;
+            }
+
+            MemberInfo[] candidates = objType.GetMember(methodName, MemberTypes.Method, BindingFlags.Public | BindingFlags.Instance);
+            if (candidates.Length == 0)
+                return null;
+            foreach (MethodBase candidate in candidates)
+            {
+                if (matchParameters(luaState, candidate, ref dummy))
+                {
+                    setMemberCache(memberCache, objType, methodName, candidate);
+                    return candidate;
+                }
+            }
+            return null;
         }
 
         /*
@@ -180,42 +211,34 @@ namespace SharpLua
             }
             else
             {
-                // Try to use get_Item to index into this .net object
-                //MethodInfo getter = objType.GetMethod("get_Item");
-                // issue here is that there may be multiple indexers..
-                MethodInfo[] methods = objType.GetMethods();
+                // Delete the 'this' object at stack position 1
+                // This makes it possible to use matchParameters to locate a viable method
+                Lua.lua_remove(luaState, 1);
 
-                foreach (MethodInfo mInfo in methods)
+                MethodBase getter = resolveIndexerMethod(luaState, objType, "get_Item");
+                if (getter != null)
                 {
-                    if (mInfo.Name == "get_Item")
+                    // TODO: figure out a way to leverage the same code used in LuaMethodWrapper for this
+                    // probably create a LuaStackToInvokeArgs method or something?
+                    // Maybe that belongs on ObjectTranslator...
+                    ParameterInfo[] actualParms = getter.GetParameters();
+                    // Get the index in a form acceptable to the getter
+                    index = translator.getAsType(luaState, 1, actualParms[0].ParameterType);
+                    try
                     {
-                        //check if the signature matches the input
-                        if (mInfo.GetParameters().Length == 1)
-                        {
-                            MethodInfo getter = mInfo;
-                            ParameterInfo[] actualParms = getter.GetParameters();
-                            // Get the index in a form acceptable to the getter
-                            index = translator.getAsType(luaState, 2, actualParms[0].ParameterType);
-                            // Just call the indexer - if out of bounds an exception will happen
-                            try
-                            {
-                                object result = getter.Invoke(obj, new object[] { index });
-                                translator.push(luaState, result);
-                                failed = false;
-                            }
-                            catch (TargetInvocationException e)
-                            {
-                                // Provide a more readable description for the common case of key not found
-                                if (e.InnerException is KeyNotFoundException)
-                                    return translator.pushError(luaState, "key '" + index + "' not found ");
-                                else
-                                    return translator.pushError(luaState, "exception indexing '" + index + "' " + e.Message);
-                            }
-                        }
+                        object result = getter.Invoke(obj, new object[] { index });
+                        translator.push(luaState, result);
+                        failed = false;
+                    }
+                    catch (TargetInvocationException e)
+                    {
+                        // Provide a more readable description for the common case of key not found
+                        if (e.InnerException is KeyNotFoundException)
+                            return translator.pushError(luaState, "key '" + index + "' not found ");
+                        else
+                            return translator.pushError(luaState, "exception indexing '" + index + "' " + e.Message);
                     }
                 }
-
-
             }
             if (failed)
             {
@@ -667,7 +690,7 @@ namespace SharpLua
                     LuaDLL.lua_pushnil(luaState);
                     return 1;
                 } //CP: Ignore case
-                else 
+                else
                     return getMember(luaState, klass, null, methodName, BindingFlags.FlattenHierarchy | BindingFlags.Static | BindingFlags.IgnoreCase);
             }
         }
@@ -810,7 +833,7 @@ namespace SharpLua
                 }
                 else if (currentLuaParam > nLuaParams) // Adds optional parameters
                 {
-                    if ( (currentNetParam.Attributes & ParameterAttributes.Optional) != 0 )
+                    if ((currentNetParam.Attributes & ParameterAttributes.Optional) != 0)
                     {
                         paramList.Add(currentNetParam.DefaultValue);
                     }
@@ -850,7 +873,7 @@ namespace SharpLua
 
                     currentLuaParam++;
                 }
-                else if ( (currentNetParam.Attributes & ParameterAttributes.Optional) != 0 )
+                else if ((currentNetParam.Attributes & ParameterAttributes.Optional) != 0)
                 {
                     paramList.Add(currentNetParam.DefaultValue);
                 }
