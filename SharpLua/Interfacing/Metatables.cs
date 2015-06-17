@@ -193,7 +193,7 @@ namespace SharpLua
                         if (mInfo.GetParameters().Length == 1)
                         {
                             MethodInfo getter = mInfo;
-                            ParameterInfo[] actualParms = (getter != null) ? getter.GetParameters() : null;
+                            ParameterInfo[] actualParms = getter.GetParameters();
                             if (actualParms == null || actualParms.Length != 1)
                             {
                                 return translator.pushError(luaState, "method not found (or no indexer): " + index);
