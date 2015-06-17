@@ -194,29 +194,22 @@ namespace SharpLua
                         {
                             MethodInfo getter = mInfo;
                             ParameterInfo[] actualParms = getter.GetParameters();
-                            if (actualParms == null || actualParms.Length != 1)
+                            // Get the index in a form acceptable to the getter
+                            index = translator.getAsType(luaState, 2, actualParms[0].ParameterType);
+                            // Just call the indexer - if out of bounds an exception will happen
+                            try
                             {
-                                return translator.pushError(luaState, "method not found (or no indexer): " + index);
+                                object result = getter.Invoke(obj, new object[] { index });
+                                translator.push(luaState, result);
+                                failed = false;
                             }
-                            else
+                            catch (TargetInvocationException e)
                             {
-                                // Get the index in a form acceptable to the getter
-                                index = translator.getAsType(luaState, 2, actualParms[0].ParameterType);
-                                // Just call the indexer - if out of bounds an exception will happen
-                                try
-                                {
-                                    object result = getter.Invoke(obj, new object[] { index });
-                                    translator.push(luaState, result);
-                                    failed = false;
-                                }
-                                catch (TargetInvocationException e)
-                                {
-                                    // Provide a more readable description for the common case of key not found
-                                    if (e.InnerException is KeyNotFoundException)
-                                        return translator.pushError(luaState, "key '" + index + "' not found ");
-                                    else
-                                        return translator.pushError(luaState, "exception indexing '" + index + "' " + e.Message);
-                                }
+                                // Provide a more readable description for the common case of key not found
+                                if (e.InnerException is KeyNotFoundException)
+                                    return translator.pushError(luaState, "key '" + index + "' not found ");
+                                else
+                                    return translator.pushError(luaState, "exception indexing '" + index + "' " + e.Message);
                             }
                         }
                     }
