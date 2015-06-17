@@ -216,8 +216,6 @@ namespace SharpLua
                                         return translator.pushError(luaState, "key '" + index + "' not found ");
                                     else
                                         return translator.pushError(luaState, "exception indexing '" + index + "' " + e.Message);
-
-
                                 }
                             }
                         }
