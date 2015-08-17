@@ -1,4 +1,20 @@
-﻿SharpLua 2.0 is a combination of a port of Lua 5.1.5, various interfaces, but will be eventually replaced by new, better, code.
+﻿This is my fork of minlover11's SharpLua, an excellent reimplementation of
+Lua version 5.1.5 in native C# (*not* a simple wrapper) that seamlessly
+leverages Reflection to integrate Lua into .NET's type system.
+
+My changes include the following:
+
+* Increased compatibility with the original Lua.  As much of the original
+  Lua 5.1.5 test suite passes as I could manage.
+* Increased performance (not merged in yet, check 'optimizations' branch.)
+* Compatible with .NET 2.0 -- both FX (the desktop framework) and CF (the
+  stripped-down version that runs on Windows CE).
+  Yes, this Lua works even on ARM CPUs running Windows CE 5.0.
+
+---------------------------------------
+Original README:
+
+SharpLua 2.0 is a combination of a port of Lua 5.1.5, various interfaces, but will be eventually replaced by new, better, code.
 Why did I start with a Lua 5.1.5 C port? because... You Can't Get More Accurate Than The Original (TM), and the C api allows easier porting of C libs.
 
 
