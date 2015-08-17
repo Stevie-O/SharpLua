@@ -501,26 +501,32 @@ namespace SharpLua
                 }
                 else
                 {
-                    // Try to see if we have a this[] accessor
-                    MethodInfo setter = type.GetMethod("set_Item");
+                    // Delete the 'this' object at stack position 1
+                    // This makes it possible to use matchParameters to locate a viable method
+                    Lua.lua_remove(luaState, 1);
+
+                    MethodBase setter = resolveIndexerMethod(luaState, type, "set_Item");
                     if (setter != null)
                     {
-                        ParameterInfo[] args = setter.GetParameters();
-                        Type valueType = args[1].ParameterType;
-
-                        // The new val ue the user specified
-                        object val = translator.getAsType(luaState, 3, valueType);
-
-                        Type indexType = args[0].ParameterType;
-                        object index = translator.getAsType(luaState, 2, indexType);
-
-                        object[] methodArgs = new object[2];
-
-                        // Just call the indexer - if out of bounds an exception will happen
-                        methodArgs[0] = index;
-                        methodArgs[1] = val;
-
-                        setter.Invoke(target, methodArgs);
+                        // TODO: figure out a way to leverage the same code used in LuaMethodWrapper for this
+                        // probably create a LuaStackToInvokeArgs method or something?
+                        // Maybe that belongs on ObjectTranslator...
+                        ParameterInfo[] actualParms = setter.GetParameters();
+                        // Get the index in a form acceptable to the getter
+                        object index = translator.getAsType(luaState, 1, actualParms[0].ParameterType);
+                        object arg = translator.getAsType(luaState, 2, actualParms[1].ParameterType);
+                        try
+                        {
+                            setter.Invoke(target, new object[] { index, arg });
+                        }
+                        catch (TargetInvocationException e)
+                        {
+                            // Provide a more readable description for the common case of key not found
+                            if (e.InnerException is KeyNotFoundException)
+                                return translator.pushError(luaState, "key '" + index + "' not found ");
+                            else
+                                return translator.pushError(luaState, "exception indexing '" + index + "' " + e.Message);
+                        }
                     }
                     else
                     {
