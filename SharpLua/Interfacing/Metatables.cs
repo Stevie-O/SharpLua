@@ -242,7 +242,7 @@ namespace SharpLua
             }
             if (failed)
             {
-                return translator.pushError(luaState, "cannot find " + index);
+                return translator.pushError(luaState, "cannot find " + index + " in " + obj.GetType().Name);
             }
             LuaDLL.lua_pushboolean(luaState, false);
             return 2;
@@ -367,6 +367,7 @@ namespace SharpLua
 
                         translator.push(luaState, val);
                     }
+                    catch (Lua.LuaException) { throw; }
                     catch (ArgumentException)
                     {
                         // If we can't find the getter in our class, recurse up to the base class and see
@@ -541,6 +542,7 @@ namespace SharpLua
                 throw;
             }
 #endif
+            catch (Lua.LuaException) { throw; }
             catch (Exception e)
             {
                 ThrowError(luaState, e);
@@ -591,7 +593,7 @@ namespace SharpLua
                 }
                 else
                 {
-                    detailMessage = "field or property '" + fieldName + "' does not exist";
+                    detailMessage = "field or property '" + fieldName + "' does not exist in " + targetType.UnderlyingSystemType.Name;
                     return false;
                 }
             }
@@ -604,6 +606,7 @@ namespace SharpLua
                 {
                     field.SetValue(target, val);
                 }
+                catch (Lua.LuaException) { throw; }
                 catch (Exception e)
                 {
                     ThrowError(luaState, e);
@@ -619,6 +622,7 @@ namespace SharpLua
                 {
                     property.SetValue(target, val, null);
                 }
+                catch (Lua.LuaException) { throw; }
                 catch (Exception e)
                 {
                     ThrowError(luaState, e);
