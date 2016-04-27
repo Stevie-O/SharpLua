@@ -328,7 +328,7 @@ namespace SharpLua
                 {
                     try
                     {
-                        Enum.Parse(t, s);
+                        Enum.Parse(t, s, false);
                         return true;
                     }
                     catch { }
