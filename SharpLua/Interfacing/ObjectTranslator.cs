@@ -183,6 +183,10 @@ namespace SharpLua
          */
         internal void throwError(SharpLua.Lua.LuaState luaState, object e)
         {
+            // if e is a LuaErrorException, it's wrapping the real object to be thrown (usually a string)
+            LuaErrorException luaerror_ex = e as LuaErrorException;
+            if (luaerror_ex != null)
+                e = luaerror_ex.LuaErrorObject;
             // If the argument is a mere string, we are free to add extra info to it (as opposed to some private C# exception object or somesuch, which we just pass up)
             if (e is string)
             {

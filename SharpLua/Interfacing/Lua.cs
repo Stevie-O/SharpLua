@@ -216,9 +216,9 @@ namespace SharpLua
         /// </summary>
         /// <returns>num of things on stack</returns>
         /// <param name="e">null for no pending exception</param>
-        internal int SetPendingException(Exception e)
+        internal int SetPendingException(object e)
         {
-            Exception caughtExcept = e;
+            object caughtExcept = e;
 
             if (caughtExcept != null)
             {

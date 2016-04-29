@@ -126,7 +126,7 @@ namespace SharpLua
         /// </summary>
         /// <returns>num of things on stack</returns>
         /// <param name="e">null for no pending exception</param>
-        int SetPendingException(Lua.LuaState luaState, Exception e)
+        int SetPendingException(Lua.LuaState luaState, object e)
         {
             return luaState.Interface.SetPendingException(e);
         }
@@ -149,7 +149,7 @@ namespace SharpLua
             int nReturnValues = 0;
 
             if (!LuaDLL.lua_checkstack(luaState, 5))
-                throw new LuaException("Lua stack overflow");
+                _Translator.throwError(luaState, "Lua stack overflow");
 
             bool isStatic = (_BindingType & BindingFlags.Static) == BindingFlags.Static;
 
@@ -172,7 +172,7 @@ namespace SharpLua
                     if (numArgsPassed == _LastCalledMethod.argTypes.Length) // No. of args match?
                     {
                         if (!LuaDLL.lua_checkstack(luaState, _LastCalledMethod.outList.Length + 6))
-                            throw new LuaException("Lua stack overflow");
+                            _Translator.throwError(luaState, "Lua stack overflow");
 
                         object[] args = _LastCalledMethod.args;
 
@@ -194,7 +194,8 @@ namespace SharpLua
                                 if (args[type.index] == null &&
                                     !LuaDLL.lua_isnil(luaState, i + 1 + numStackToSkip))
                                 {
-                                    throw new LuaException("argument number " + (i + 1) + " is invalid");
+                                    string methodId = _LastCalledMethod.cachedMethod.DeclaringType.Name + "." + _LastCalledMethod.cachedMethod.Name;
+                                    throw new LuaErrorException("argument number " + (i + 1) + " to " + methodId + " is invalid");
                                 }
                             }
                             if ((_BindingType & BindingFlags.Static) == BindingFlags.Static)
@@ -215,6 +216,7 @@ namespace SharpLua
                             // Failure of method invocation
                             return SetPendingException(luaState, e.GetBaseException());
                         }
+                        catch (Lua.LuaException) { throw; }
                         catch (Exception e)
                         {
                             if (_Members.Length == 1) // Is the method overloaded?
@@ -317,7 +319,7 @@ namespace SharpLua
             if (failedCall)
             {
                 if (!LuaDLL.lua_checkstack(luaState, _LastCalledMethod.outList.Length + 6))
-                    throw new LuaException("Lua stack overflow");
+                    _Translator.throwError(luaState, "Lua stack overflow");
                 try
                 {
                     if (isStatic)
@@ -336,6 +338,7 @@ namespace SharpLua
                 {
                     return SetPendingException(luaState, e.GetBaseException());
                 }
+                catch (Lua.LuaException) { throw; }
                 catch (Exception e)
                 {
                     return SetPendingException(luaState, e);

@@ -58,6 +58,7 @@
     <Compile Include="CFSupport.cs" />
     <Compile Include="Decompiler\Decompiler.cs" />
     <Compile Include="Interfacing\IReturnListHandler.cs" />
+    <Compile Include="Interfacing\LuaErrorException.cs" />
     <Compile Include="NewParser\StringExt.cs" />
     <Compile Include="Support\errno_h.cs" />
     <Compile Include="Support\LuaCFSupport.cs" />
