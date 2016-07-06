@@ -785,6 +785,20 @@ namespace SharpLua
             return Math.Ceiling(x) == x;
         }
 
+        static string GetTypeName(object o)
+        {
+            if (o == null) return "null";
+            return o.GetType().Name;
+        }
+
+        static bool IsCompatibleType(object o, Type t)
+        {
+            // if o is null, then just check if t is a value type
+            if (o == null)
+                return !t.IsValueType;
+            return t.IsAssignableFrom(o.GetType());
+        }
+
         internal Array TableToArray(object luaParamValue, Type paramArrayType)
         {
             Array paramArray;
@@ -803,10 +817,23 @@ namespace SharpLua
                     object o = tableEnumerator.Value;
                     if (paramArrayType == typeof(object))
                     {
-                        if (o != null && o.GetType() == typeof(double) && IsInteger((double)o))
+                        if (o is double && IsInteger((double)o))
                             o = Convert.ToInt32((double)o);
                     }
-                    paramArray.SetValue(Convert.ChangeType(o, paramArrayType, null), paramArrayIndex);
+                    object o_arrayValue;
+                    if (false && IsCompatibleType(o, paramArrayType))
+                        o_arrayValue = o;
+                    else
+                        try
+                        {
+                            o_arrayValue = Convert.ChangeType(o, paramArrayType, null);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new LuaErrorException(string.Format("Unable to convert table index {0} from type {1} to type {2}: ({3}) {4}",
+                                tableEnumerator.Key, GetTypeName(o), paramArrayType.Name, ex.GetType().Name, ex.Message));
+                        }
+                    paramArray.SetValue(o_arrayValue, paramArrayIndex);
                     paramArrayIndex++;
                 }
             }
