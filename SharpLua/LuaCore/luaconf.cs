@@ -1354,19 +1354,6 @@ namespace SharpLua
             return -1;
         }
 
-#if XBOX || SILVERLIGHT
-		public static Stream stdout = Stream.Null;
-		public static Stream stdin = Stream.Null;
-		public static Stream stderr = Stream.Null;
-#elif WindowsCE
-        public static Stream stdout = new ConsoleStream(1);
-        public static Stream stdin = new ConsoleStream(0);
-        public static Stream stderr = new ConsoleStream(2);
-#else
-        public static Stream stdout = Console.OpenStandardOutput();
-        public static Stream stdin = Console.OpenStandardInput();
-        public static Stream stderr = Console.OpenStandardError();
-#endif
         public static int EOF = -1;
 
         static int WriteArrayToStream(Stream s, byte[] buffer)
