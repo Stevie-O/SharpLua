@@ -711,7 +711,7 @@ namespace SharpLua
             if (filename == null)
             {
                 lua_pushliteral(L, "=stdin");
-                lf.f = stdin;
+                lf.f = L.l_G.stdin;
             }
             else
             {
@@ -796,7 +796,7 @@ namespace SharpLua
         private static int panic(LuaState L)
         {
             //(void)L;  /* to avoid warnings */
-            fprintf(stderr, "PANIC: unprotected error in call to Lua API (%s)\n",
+            fprintf(L.l_G.stderr, "PANIC: unprotected error in call to Lua API (%s)\n",
                              lua_tostring(L, -1));
             return 0;
         }

@@ -299,9 +299,9 @@ namespace SharpLua
 #else
         public static bool lua_readline(LuaState L, CharPtr b, CharPtr p)
         {
-            fputs(p, stdout);
-            fflush(stdout);		/* show prompt */
-            return (fgets(b, stdin) != null);  /* get line */
+            fputs(p, L.l_G.stdout);
+            fflush(L.l_G.stdout);		/* show prompt */
+            return (fgets(b, L.l_G.stdin) != null);  /* get line */
         }
         public static void lua_saveline(LuaState L, int idx) { }
         public static void lua_freeline(LuaState L, CharPtr b) { }
@@ -944,12 +944,12 @@ namespace SharpLua
             }
         }
 
-        public static void putchar(char ch)
+        public static void putchar(char ch, Stream stdout)
         {
             fputc(ch, stdout);
         }
 
-        public static int putchar(int ch)
+        public static int putchar(int ch, Stream stdout)
         {
             return fputc(ch, stdout);
         }
@@ -959,7 +959,7 @@ namespace SharpLua
             return (c >= (byte)' ') && (c <= (byte)127);
         }
 
-        public static void printf(CharPtr str, params object[] argv)
+        public static void printf(Stream stdout, CharPtr str, params object[] argv)
         {
             Tools.fprintf(stdout, str.ToString(), argv);
         }

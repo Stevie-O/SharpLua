@@ -334,15 +334,15 @@ namespace SharpLua
             for (; ; )
             {
                 CharPtr buffer = new char[250];
-                fputs("lua_debug> ", stderr);
-                if (fgets(buffer, stdin) == null ||
+                fputs("lua_debug> ", L.l_G.stderr);
+                if (fgets(buffer, L.l_G.stdin) == null ||
                     strcmp(buffer, "cont\n") == 0)
                     return 0;
                 if (luaL_loadbuffer(L, buffer, (uint)strlen(buffer), "=(debug command)") != 0 ||
                     lua_pcall(L, 0, 0, 0) != 0)
                 {
-                    fputs(lua_tostring(L, -1), stderr);
-                    fputs("\n", stderr);
+                    fputs(lua_tostring(L, -1), L.l_G.stderr);
+                    fputs("\n", L.l_G.stderr);
                 }
                 lua_settop(L, 0);  /* remove eventual returns */
             }

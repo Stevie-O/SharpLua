@@ -34,11 +34,11 @@ namespace SharpLua
                 if (s == null)
                     return luaL_error(L, LUA_QL("tostring") + " must return a string to " +
                                          LUA_QL("print"));
-                if (i > 1) fputs("\t", stdout);
-                fputs(s, stdout);
+                if (i > 1) fputs("\t", L.l_G.stdout);
+                fputs(s, L.l_G.stdout);
                 lua_pop(L, 1);  /* pop result */
             }
-            fputs("\n", stdout);
+            fputs("\n", L.l_G.stdout);
             return 0;
         }
 
