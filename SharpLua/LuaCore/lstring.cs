@@ -121,6 +121,7 @@ namespace SharpLua
 			u.uv.metatable = null;
 			u.uv.env = e;
 			u.user_data = new byte[s];
+			AddTotalBytes(L, GetUnmanagedSize(typeof(Udata)) + (int)s);
 			/* chain it on udata list (after main thread) */
 			u.uv.next = G(L).mainthread.next;
 			G(L).mainthread.next = obj2gco(u);
