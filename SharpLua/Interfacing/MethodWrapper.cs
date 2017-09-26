@@ -38,6 +38,11 @@ namespace SharpLua
 
         public bool IsReturnVoid;
 
+        /// <summary>
+        /// The internal Lua type that was last passed in for each parameter
+        /// </summary>
+        public LuaTypes[] luaTypes;
+
         // List or arguments
         public object[] args;
         // Positions of out parameters

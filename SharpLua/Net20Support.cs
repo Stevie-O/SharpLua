@@ -14,8 +14,8 @@ namespace System.Linq
 
 namespace System
 {
-    public delegate TResult Func<T, TResult>(T arg);
-    public delegate TResult Func<T1, T2, TResult>(T1 arg1, T2 arg2);
+    delegate TResult Func<T, TResult>(T arg);
+    delegate TResult Func<T1, T2, TResult>(T1 arg1, T2 arg2);
 }
 
 namespace System.Runtime.CompilerServices

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 namespace SharpLua.LASM
 {
-    public class PlatformConfig
+    class PlatformConfig
     {
         public class Platform
         {
