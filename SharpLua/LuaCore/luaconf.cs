@@ -299,9 +299,9 @@ namespace SharpLua
 #else
         public static bool lua_readline(LuaState L, CharPtr b, CharPtr p)
         {
-            fputs(p, stdout);
-            fflush(stdout);		/* show prompt */
-            return (fgets(b, stdin) != null);  /* get line */
+            fputs(p, L.l_G.stdout);
+            fflush(L.l_G.stdout);		/* show prompt */
+            return (fgets(b, L.l_G.stdin) != null);  /* get line */
         }
         public static void lua_saveline(LuaState L, int idx) { }
         public static void lua_freeline(LuaState L, CharPtr b) { }
@@ -944,12 +944,12 @@ namespace SharpLua
             }
         }
 
-        public static void putchar(char ch)
+        public static void putchar(char ch, Stream stdout)
         {
             fputc(ch, stdout);
         }
 
-        public static int putchar(int ch)
+        public static int putchar(int ch, Stream stdout)
         {
             return fputc(ch, stdout);
         }
@@ -959,7 +959,7 @@ namespace SharpLua
             return (c >= (byte)' ') && (c <= (byte)127);
         }
 
-        public static void printf(CharPtr str, params object[] argv)
+        public static void printf(Stream stdout, CharPtr str, params object[] argv)
         {
             Tools.fprintf(stdout, str.ToString(), argv);
         }
@@ -1354,19 +1354,6 @@ namespace SharpLua
             return -1;
         }
 
-#if XBOX || SILVERLIGHT
-		public static Stream stdout = Stream.Null;
-		public static Stream stdin = Stream.Null;
-		public static Stream stderr = Stream.Null;
-#elif WindowsCE
-        public static Stream stdout = new ConsoleStream(1);
-        public static Stream stdin = new ConsoleStream(0);
-        public static Stream stderr = new ConsoleStream(2);
-#else
-        public static Stream stdout = Console.OpenStandardOutput();
-        public static Stream stdin = Console.OpenStandardInput();
-        public static Stream stderr = Console.OpenStandardError();
-#endif
         public static int EOF = -1;
 
         static int WriteArrayToStream(Stream s, byte[] buffer)

@@ -947,7 +947,7 @@ namespace SharpLua
         }*/
 
         /// <summary>
-        /// If the class has the ModuleAttribute, it registers all the methods with
+        /// If the class has the LuaModuleAttribute, it registers all the methods with
         /// the LuaFunctionAttribute into this instance of SharpLua
         /// </summary>
         /// <param name="t"></param>
@@ -974,6 +974,43 @@ namespace SharpLua
                         if (a2[0].FunctionName == "")
                             a2[0].FunctionName = mi.Name;
                         this.RegisterFunction(module + "." + a2[0].FunctionName, t, mi);
+                    }
+                }
+            }
+            return ret;
+        }
+
+        /// <summary>
+        /// If the class of the object has the LuaModuleAttribute, it registers all
+        /// the methods with the LuaFunctionAttribute into this instance of SharpLua
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns>The module, or null if there wasn't one</returns>
+        public LuaTable RegisterModule(object o)
+        {
+            LuaTable ret = null;
+            var t = o.GetType();
+  
+            //Shouldn't ever happen, or can it?
+            //if (t.IsClass == false)
+            //    throw new ArgumentException("Not a class", "t");
+
+            LuaModuleAttribute[] attribs = (LuaModuleAttribute[])t.GetCustomAttributes(typeof(LuaModuleAttribute), false);
+            if (attribs.Length > 0)
+            {
+                if (attribs[0].ModuleName == "")
+                    attribs[0].ModuleName = t.Name; // Default to class name if not specified
+                // its a module
+                string module = attribs[0].ModuleName;
+                ret = this.NewTable(module);
+                foreach (MethodInfo mi in t.GetMethods())
+                {
+                    LuaFunctionAttribute[] a2 = (LuaFunctionAttribute[])mi.GetCustomAttributes(typeof(LuaFunctionAttribute), false);
+                    if (a2.Length > 0 && !mi.IsStatic)
+                    {
+                        if (a2[0].FunctionName == "")
+                            a2[0].FunctionName = mi.Name;
+                        this.RegisterFunction(module + "." + a2[0].FunctionName, o, mi);
                     }
                 }
             }

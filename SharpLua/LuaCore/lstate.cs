@@ -19,7 +19,7 @@ namespace SharpLua
     using StkId = Lua.lua_TValue;
     using ptrdiff_t = System.Int32;
     using Instruction = System.UInt32;
-
+    using System.IO;
     public partial class Lua
     {
         /* table of globals */
@@ -150,6 +150,21 @@ namespace SharpLua
          */
         public class GlobalState
         {
+
+#if XBOX || SILVERLIGHT
+		    public Stream stdout = Stream.Null;
+		    public Stream stdin = Stream.Null;
+		    public Stream stderr = Stream.Null;
+#elif WindowsCE
+            public Stream stdout = new ConsoleStream(1);
+            public Stream stdin = new ConsoleStream(0);
+            public Stream stderr = new ConsoleStream(2);
+#else
+            public Stream stdout = Console.OpenStandardOutput();
+            public Stream stdin = Console.OpenStandardInput();
+            public Stream stderr = Console.OpenStandardError();
+#endif
+
             public stringtable strt = new stringtable(); /* hash table for strings */
             public lua_Alloc frealloc;  /* function to reallocate memory */
             public object ud;         /* auxiliary data to `frealloc' */

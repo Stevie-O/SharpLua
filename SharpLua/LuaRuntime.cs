@@ -117,6 +117,11 @@ namespace SharpLua
             _interface.RegisterModule(t);
         }
 
+        public static void RegisterModule(object o)
+        {
+            _interface.RegisterModule(o);
+        }
+
         /// <summary>
         /// Gets the global LuaInterface object used by LuaRuntime methods.
         /// </summary>
